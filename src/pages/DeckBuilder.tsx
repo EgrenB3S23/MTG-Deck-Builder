@@ -1,6 +1,7 @@
 import { FormEvent, ReactElement, useState } from "react";
 import { IDeck, IDecklistEntry } from "../interfaces";
 import { parseCardName } from "../utils";
+import { DecklistForm } from "../components/DecklistForm";
 export function DeckBuilder(): ReactElement {
 	// raw textbox data:
 	const [rawDeckName, setRawDeckName] = useState("");
@@ -21,15 +22,15 @@ export function DeckBuilder(): ReactElement {
 	// Save deck to state and localStorage
 	const saveDeck = (newDeck: IDeck) => {
 		setDeck(newDeck);
-		localStorage.setItem("myDeck", JSON.stringify(newDeck));
+		localStorage.setItem("deckUnckecked", JSON.stringify(newDeck));
 	};
 
-	// load deck from localStorage
+	// load deck from localStorage return deck as IDeck object.
 	const loadDeck = () => {
 		const deckfromLocalStorage = localStorage.getItem("deckUnchecked");
 
 		if (deckfromLocalStorage) {
-			const deckToLoad = JSON.parse(deckfromLocalStorage);
+			const deckToLoad: IDeck = JSON.parse(deckfromLocalStorage);
 			return deckToLoad;
 		} else return null;
 	};
@@ -70,6 +71,69 @@ export function DeckBuilder(): ReactElement {
 			return null;
 		}
 		return decklistEntry; // format: {name: "Mox Opal", count: 4}
+	}
+
+	function toRawDecklistEntry(input: IDecklistEntry | null): string | null {
+		// exmple input: {name: "mox opal", count: 4}
+		// example output: "4 mox opal"
+		// returns null if error
+
+		let countStr: string = ""; // example: "4"
+		let nameStr: string = ""; // example: "mox opal"
+		let retVal: string | null = null; // example: "4 mox opal"
+
+		// data validation
+		if (input !== null) {
+			countStr = input.count.toString(); // "4"
+			nameStr = input.name.toString(); // "mox opal"
+		} else return null;
+		if (countStr && nameStr) {
+			retVal = `${countStr} ${nameStr}`; // "4 mox opal"
+		} else return null;
+
+		return retVal;
+	}
+
+	function createStringsFromDeck(input: IDeck): [string, string, string] {
+		// todo 241015
+		// input: an IDeck object.
+		// output: array of 3 strings formatted as intended for the 3 decklist form textboxes.
+		// example input:
+		/*
+		{
+			name: "Hello deck!",
+			main: [
+				{name: "Mox opal", count: 4},
+				{name: "Mox lotus", count: 4}
+			],
+			sideboard: [
+				{name: "Mox opal", count: 4},
+				{name: "Mox lotus", count: 4}
+			]
+		}
+		*/
+		// example output:
+		/* 
+		[
+			"Hello deck!",
+			"4 Mox opal\n4 Mox lotus",
+			"4 Mox opal\n4 Mox lotus",
+		]
+		*/
+
+		const nameStr = input.name;
+		let mainStr = "";
+		let sideboardStr = "";
+
+		for (const entry of input.main) {
+			mainStr = `${mainStr}\n${entry.count} ${entry.name}`;
+		}
+
+		for (const entry of input.sideboard) {
+			sideboardStr = `${sideboardStr}\n${entry.count} ${entry.name}`;
+		}
+
+		return [nameStr.trim(), mainStr.trim(), sideboardStr.trim()];
 	}
 
 	function createDeckFromStrings(inputName: string, inputMain: string, inputSB: string): IDeck {
@@ -120,8 +184,8 @@ export function DeckBuilder(): ReactElement {
 	const handleSaveDeck = (e: FormEvent<HTMLFormElement>) => {
 		// todo 241014
 
-		// 1. generate deck object from textbox data
-		// 2. parse each card in deck object. If any one fails,
+		// 1. convert textbox data into deck (IDeck) object.
+		// 2. save deck object to Local Storage
 
 		e.preventDefault();
 
@@ -130,6 +194,12 @@ export function DeckBuilder(): ReactElement {
 		// get a complete deck object from textbox strings:
 		let deckUnchecked: IDeck = createDeckFromStrings(rawDeckName, rawDeckMain, rawDeckSB);
 		console.log("deckUnchecked: ", deckUnchecked);
+		setDeck({
+			//
+			name: deckUnchecked.name,
+			main: deckUnchecked.main,
+			sideboard: deckUnchecked.sideboard,
+		});
 		localStorage.setItem("deckUnchecked", JSON.stringify(deckUnchecked));
 	};
 
@@ -229,6 +299,66 @@ export function DeckBuilder(): ReactElement {
 		console.log("resp length", resp.length);
 	};
 
+	const handleLoadDeck = () => {
+		// todo 241014
+		// 1. load deck object from localstorage
+		// 2. setDeck(name, main, sb) <- IDeck object
+		// 3. setRawDeckName(name)
+		// 4. maindeck: convert array of decklist entries into array of strings, then setRawDeckMain
+		// 5. sideboard: convert array of decklist entries into array of strings, then setRawDeckSB
+		// 6.
+
+		// to deck state and to decklist form states.
+
+		console.log("handleLoadDeck(): ");
+
+		// 1. load deck object from localstorage
+		const deckToLoad = loadDeck(); // IDeck object (or null if error)
+		console.log("deckToLoad: ", deckToLoad);
+		if (deckToLoad !== null) {
+			// 2. setDeck
+			setDeck({
+				// save deck object to state
+				name: deckToLoad.name,
+				main: deckToLoad.main,
+				sideboard: deckToLoad.sideboard,
+			});
+
+			// set raws
+			const [rawNameStr, rawMainStr, rawSideboardStr] = createStringsFromDeck(deckToLoad);
+
+			console.log("rawNameStr: ", rawNameStr);
+			console.log("rawMainStr: ", rawMainStr);
+			console.log("rawSideboardStr: ", rawSideboardStr);
+
+			setRawDeckName(rawNameStr);
+			setRawDeckMain(rawMainStr);
+			setRawDeckSB(rawSideboardStr);
+
+			// 3. setRawDeckName
+			/*
+			const rawName: string = deckToLoad.name;
+			const rawMain: string = "";
+			const rawSideboard: string = "";
+			*/
+
+			// const rawMain: string = deckToLoad.main.join("\n");
+			// const rawSideboard: string = deckToLoad.sideboard.join("\n");
+
+			/*
+			console.log(rawName);
+			console.log(rawMain);
+			console.log(rawSideboard);
+			console.log("");
+			let foo = ["4 mox opal", "4 mox lotus"];
+			console.log(foo);
+			setRawDeckName(rawName);
+			setRawDeckMain(rawMain);
+			setRawDeckSB(rawSideboard);
+			*/
+		}
+	};
+
 	return (
 		<>
 			<section id="deckBuilder">
@@ -243,7 +373,6 @@ export function DeckBuilder(): ReactElement {
 				<button onClick={() => handleLookup("mox opal")}>"mox opal"</button>
 				<button onClick={() => handleLookup("Moxopal")}>"Moxopal"</button>
 				<button onClick={() => handleLookup("moxpal")}>"moxpal"</button>
-				{/* <form action=""></form> */}
 				<form id="decklist-form" onSubmit={handleSaveDeck}>
 					<input //
 						name="deckName"
@@ -259,7 +388,7 @@ export function DeckBuilder(): ReactElement {
 						rows={20}
 						value={rawDeckMain}
 						onChange={(e) => setRawDeckMain(e.target.value)}
-					></textarea>
+					/>
 					<textarea //
 						name="deckSB"
 						id="deckSB"
@@ -267,9 +396,12 @@ export function DeckBuilder(): ReactElement {
 						rows={8}
 						value={rawDeckSB}
 						onChange={(e) => setRawDeckSB(e.target.value)}
-					></textarea>
+					/>
 					<button type="submit">Save deck</button>
 				</form>
+				{/* <DecklistForm /> */}
+				<button onClick={handleLoadDeck}>Load deck!</button>
+				{/* <button onClick={}>Load deck!</button> */}
 			</section>
 		</>
 	);
