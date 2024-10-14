@@ -101,12 +101,12 @@ export function DeckBuilder(): ReactElement {
 		// example input:
 		/*
 		{
-			"Hello deck!",
-			[									// maindeck starts on this line
+			name: "Hello deck!",
+			main: [
 				{name: "Mox opal", count: 4},
 				{name: "Mox lotus", count: 4}
 			],
-			[									// sideboard starts on this line
+			sideboard: [
 				{name: "Mox opal", count: 4},
 				{name: "Mox lotus", count: 4}
 			]
