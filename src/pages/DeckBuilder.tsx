@@ -25,12 +25,12 @@ export function DeckBuilder(): ReactElement {
 		localStorage.setItem("deckUnckecked", JSON.stringify(newDeck));
 	};
 
-	// load deck from localStorage
+	// load deck from localStorage return deck as IDeck object.
 	const loadDeck = () => {
 		const deckfromLocalStorage = localStorage.getItem("deckUnchecked");
 
 		if (deckfromLocalStorage) {
-			const deckToLoad = JSON.parse(deckfromLocalStorage);
+			const deckToLoad: IDeck = JSON.parse(deckfromLocalStorage);
 			return deckToLoad;
 		} else return null;
 	};
@@ -87,9 +87,53 @@ export function DeckBuilder(): ReactElement {
 			countStr = input.count.toString(); // "4"
 			nameStr = input.name.toString(); // "mox opal"
 		} else return null;
-		if (countStr) retVal = `${countStr} ${nameStr}`;
+		if (countStr && nameStr) {
+			retVal = `${countStr} ${nameStr}`; // "4 mox opal"
+		} else return null;
 
 		return retVal;
+	}
+
+	function createStringsFromDeck(input: IDeck): [string, string, string] {
+		// todo 241015
+		// input: an IDeck object.
+		// output: array of 3 strings formatted as intended for the 3 decklist form textboxes.
+		// example input:
+		/*
+		{
+			"Hello deck!",
+			[									// maindeck starts on this line
+				{name: "Mox opal", count: 4},
+				{name: "Mox lotus", count: 4}
+			],
+			[									// sideboard starts on this line
+				{name: "Mox opal", count: 4},
+				{name: "Mox lotus", count: 4}
+			]
+		}
+		*/
+		// example output:
+		/* 
+		[
+			"Hello deck!",
+			"4 Mox opal\n4 Mox lotus",
+			"4 Mox opal\n4 Mox lotus",
+		]
+		*/
+
+		const nameStr = input.name;
+		let mainStr = "";
+		let sideboardStr = "";
+
+		for (const entry of input.main) {
+			mainStr = `${mainStr}\n${entry.count} ${entry.name}`;
+		}
+
+		for (const entry of input.sideboard) {
+			sideboardStr = `${sideboardStr}\n${entry.count} ${entry.name}`;
+		}
+
+		return [nameStr.trim(), mainStr.trim(), sideboardStr.trim()];
 	}
 
 	function createDeckFromStrings(inputName: string, inputMain: string, inputSB: string): IDeck {
@@ -257,28 +301,61 @@ export function DeckBuilder(): ReactElement {
 
 	const handleLoadDeck = () => {
 		// todo 241014
-		// 1. grab deck obj from LocalStorage.
+		// 1. load deck object from localstorage
+		// 2. setDeck(name, main, sb) <- IDeck object
+		// 3. setRawDeckName(name)
+		// 4. maindeck: convert array of decklist entries into array of strings, then setRawDeckMain
+		// 5. sideboard: convert array of decklist entries into array of strings, then setRawDeckSB
+		// 6.
+
+		// to deck state and to decklist form states.
 
 		console.log("handleLoadDeck(): ");
-		const deckToLoad = loadDeck();
+
+		// 1. load deck object from localstorage
+		const deckToLoad = loadDeck(); // IDeck object (or null if error)
 		console.log("deckToLoad: ", deckToLoad);
 		if (deckToLoad !== null) {
-			const nameToSet: string = deckToLoad.name;
-			const mainToSet: string = deckToLoad.main;
-			const sideboardToSet: string = deckToLoad.sideboard;
+			// 2. setDeck
 			setDeck({
+				// save deck object to state
 				name: deckToLoad.name,
 				main: deckToLoad.main,
 				sideboard: deckToLoad.sideboard,
 			});
-			// setDeck({
-			// 	name: nameToSet,
-			// 	main: mainToSet,
-			// 	sideboard: deckToLoad.sideboard,
-			// });
-			setRawDeckName(deckToLoad.name);
-			setRawDeckMain(deckToLoad.main.join("\n"));
-			setRawDeckSB(deckToLoad.sideboard);
+
+			// set raws
+			const [rawNameStr, rawMainStr, rawSideboardStr] = createStringsFromDeck(deckToLoad);
+
+			console.log("rawNameStr: ", rawNameStr);
+			console.log("rawMainStr: ", rawMainStr);
+			console.log("rawSideboardStr: ", rawSideboardStr);
+
+			setRawDeckName(rawNameStr);
+			setRawDeckMain(rawMainStr);
+			setRawDeckSB(rawSideboardStr);
+
+			// 3. setRawDeckName
+			/*
+			const rawName: string = deckToLoad.name;
+			const rawMain: string = "";
+			const rawSideboard: string = "";
+			*/
+
+			// const rawMain: string = deckToLoad.main.join("\n");
+			// const rawSideboard: string = deckToLoad.sideboard.join("\n");
+
+			/*
+			console.log(rawName);
+			console.log(rawMain);
+			console.log(rawSideboard);
+			console.log("");
+			let foo = ["4 mox opal", "4 mox lotus"];
+			console.log(foo);
+			setRawDeckName(rawName);
+			setRawDeckMain(rawMain);
+			setRawDeckSB(rawSideboard);
+			*/
 		}
 	};
 
@@ -324,6 +401,7 @@ export function DeckBuilder(): ReactElement {
 				</form>
 				{/* <DecklistForm /> */}
 				<button onClick={handleLoadDeck}>Load deck!</button>
+				{/* <button onClick={}>Load deck!</button> */}
 			</section>
 		</>
 	);
