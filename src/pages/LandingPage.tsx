@@ -40,6 +40,7 @@ export function LandingPage(): ReactElement {
 			{/* <CardImg imgUrl={randomCard.image_uris.png} alt={randomCard.name} caption={randomCard.name}></CardImg> */}
 			<CardImg card={randomCard}></CardImg>
 			{/* {errorMessage ? <h1 className="errorMessage">{errorMessage}</h1> : null}{" "} */}
+			<button onClick={handleButton}>new card</button>
 		</section>
 	);
 }
