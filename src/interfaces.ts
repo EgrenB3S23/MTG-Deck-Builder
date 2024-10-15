@@ -57,4 +57,5 @@ export interface parsedCard {
 	name: string;
 	is_found: boolean;
 	count: number;
+	card_info?: ICard;
 }
