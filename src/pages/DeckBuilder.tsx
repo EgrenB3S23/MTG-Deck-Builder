@@ -1,7 +1,8 @@
-import { FormEvent, ReactElement, useState } from "react";
+import { FormEvent, ReactElement, useState, useContext } from "react";
 import { IDeck, IDecklistEntry, parsedCard } from "../interfaces";
 import { parseCardName } from "../utils";
-import { DecklistForm } from "../components/DecklistForm";
+import { DeckContext } from "../context";
+
 export function DeckBuilder(): ReactElement {
 	// raw textbox data:
 	const [rawDeckName, setRawDeckName] = useState("");
@@ -10,7 +11,7 @@ export function DeckBuilder(): ReactElement {
 
 	// deck state:
 	const [deck, setDeck] = useState<IDeck | null>(null);
-
+	const deckContext = useContext(DeckContext);
 	// load deck from localStorage on mount:
 	// useEffect(() => {
 	// 	const storedDeck = localStorage.getItem("deckUnchecked");
@@ -150,31 +151,36 @@ export function DeckBuilder(): ReactElement {
 		};
 	}
 
-	async function batchCheck() {
-		if (deck) {
-			const input = deck.main;
-			const cards: parsedCard[] = [];
+	async function batchCheck(input: IDecklistEntry[]) {
+		const cards: parsedCard[] = [];
+		for (const entry of input) {
+			const nameToCheck: string = entry.name;
+			const card: parsedCard = {
+				name: entry.name,
+				is_found: false,
+				count: entry.count,
+			};
+			let parsedName = await parseCardName(nameToCheck);
 
-			for (const entry of input) {
-				const nameToCheck: string = entry.name;
-				const card: parsedCard = {
-					name: entry.name,
-					is_found: false,
-					count: entry.count,
-				};
-				let parsedName = await parseCardName(nameToCheck);
-
-				if (parsedName.length === 0) {
-					// if length = 0, card name is invalid
-					card.is_found = false;
-				} else {
-					card.is_found = true;
-				}
-				cards.push(card);
+			if (parsedName.length === 0) {
+				// if length = 0, card name is invalid
+				card.is_found = false;
+			} else {
+				card.is_found = true;
 			}
-			console.log("Parsed cards: ", cards);
+			cards.push(card);
+		}
+		console.log("Parsed cards: ", cards);
+		return cards;
+	}
 
-			return cards;
+	async function deckCheck() {
+		if (deck) {
+			const checkedMain = await batchCheck(deck.main);
+			const checkedSideboard = await batchCheck(deck.sideboard);
+			// spara till context
+			deckContext?.setDeckMain(checkedMain);
+			deckContext?.setDeckSideboard(checkedSideboard);
 		}
 	}
 
@@ -280,7 +286,7 @@ export function DeckBuilder(): ReactElement {
 				</form>
 				{/* <DecklistForm /> */}
 				<button onClick={handleLoadDeck}>Load deck!</button>
-				<button onClick={batchCheck}>parse liste</button>
+				<button onClick={deckCheck}>parse cards</button>
 			</section>
 		</>
 	);
