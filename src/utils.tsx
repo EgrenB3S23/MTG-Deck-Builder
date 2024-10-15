@@ -12,7 +12,7 @@ export async function parseCardName(cardName: string) {
 	try {
 		let searchStr = cardName.replace(" ", "+");
 		// Send fetch request
-		const resp = await fetch(`${baseURL}/cards/named?exact=${cardName}`);
+		const resp = await fetch(`${baseURL}/cards/named?exact=${searchStr}`);
 		let data = await resp.json();
 		// retVal = await data;
 

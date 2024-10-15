@@ -45,10 +45,16 @@ export interface IDecklistEntry {
 	//  used for single cards in a decklist. each line "4 Mox Opal" turns into {"Mox Opal", 4}
 	name: string;
 	count: number;
+	// is_found?: boolean
 }
 
 export interface IDeck {
 	name: string;
 	main: IDecklistEntry[];
 	sideboard: IDecklistEntry[];
+}
+export interface parsedCard {
+	name: string;
+	is_found: boolean;
+	count: number;
 }

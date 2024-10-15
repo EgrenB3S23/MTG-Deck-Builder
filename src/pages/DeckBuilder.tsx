@@ -1,5 +1,5 @@
 import { FormEvent, ReactElement, useState } from "react";
-import { IDeck, IDecklistEntry } from "../interfaces";
+import { IDeck, IDecklistEntry, parsedCard } from "../interfaces";
 import { parseCardName } from "../utils";
 import { DecklistForm } from "../components/DecklistForm";
 export function DeckBuilder(): ReactElement {
@@ -35,16 +35,6 @@ export function DeckBuilder(): ReactElement {
 		} else return null;
 	};
 
-	// lists of decklist entry objects (one entry: one name and one number)
-	// const [deckName, setDeckName] = useState<string>("");
-	// const [deckMain, setDeckMain] = useState<IDecklistEntry[]>([]);
-	// const [deckSB, setDeckSB] = useState<IDecklistEntry[]>([]);
-	// const [deck, setDeck] = useState<IDeck>({
-	// 	name: deckName,
-	// 	main: deckMain,
-	// 	sideboard: deckSB,
-	// });
-
 	function toDecklistEntry(input: string): IDecklistEntry | null {
 		// example input: "4 mox opal"
 		// exmple output: {name: "mox opal", count: 4}
@@ -71,27 +61,6 @@ export function DeckBuilder(): ReactElement {
 			return null;
 		}
 		return decklistEntry; // format: {name: "Mox Opal", count: 4}
-	}
-
-	function toRawDecklistEntry(input: IDecklistEntry | null): string | null {
-		// exmple input: {name: "mox opal", count: 4}
-		// example output: "4 mox opal"
-		// returns null if error
-
-		let countStr: string = ""; // example: "4"
-		let nameStr: string = ""; // example: "mox opal"
-		let retVal: string | null = null; // example: "4 mox opal"
-
-		// data validation
-		if (input !== null) {
-			countStr = input.count.toString(); // "4"
-			nameStr = input.name.toString(); // "mox opal"
-		} else return null;
-		if (countStr && nameStr) {
-			retVal = `${countStr} ${nameStr}`; // "4 mox opal"
-		} else return null;
-
-		return retVal;
 	}
 
 	function createStringsFromDeck(input: IDeck): [string, string, string] {
@@ -181,6 +150,34 @@ export function DeckBuilder(): ReactElement {
 		};
 	}
 
+	async function batchCheck() {
+		if (deck) {
+			const input = deck.main;
+			const cards: parsedCard[] = [];
+
+			for (const entry of input) {
+				const nameToCheck: string = entry.name;
+				const card: parsedCard = {
+					name: entry.name,
+					is_found: false,
+					count: entry.count,
+				};
+				let parsedName = await parseCardName(nameToCheck);
+
+				if (parsedName.length === 0) {
+					// if length = 0, card name is invalid
+					card.is_found = false;
+				} else {
+					card.is_found = true;
+				}
+				cards.push(card);
+			}
+			console.log("Parsed cards: ", cards);
+
+			return cards;
+		}
+	}
+
 	const handleSaveDeck = (e: FormEvent<HTMLFormElement>) => {
 		// todo 241014
 
@@ -203,96 +200,6 @@ export function DeckBuilder(): ReactElement {
 		localStorage.setItem("deckUnchecked", JSON.stringify(deckUnchecked));
 	};
 
-	// const handleSaveDeckOld = async (e: FormEvent<HTMLFormElement>): Promise<IDecklistEntry | void> => {
-	// 	e.preventDefault();
-
-	// 	console.log("");
-	// 	console.log("### in handleSaveDeck...");
-
-	// 	// create arrays from form data
-	// 	let deckMainArrDirty = rawDeckMain.split("\n");
-	// 	let deckSBArrDirty = rawDeckSB.split("\n");
-
-	// 	// current format:
-	// 	// [
-	// 	// "4 Mox Opal",
-	// 	// "4 Island",
-	// 	// ]
-
-	// 	let deckMainArr: IDecklistEntry[] = [];
-	// 	let deckSBArr: IDecklistEntry[] = [];
-
-	// 	// maindeck:
-	// 	// convert each text line into an IDecklistEntry.
-	// 	// "4 Mox Opal" -> {name:"Mox Opal", count:4}
-	// 	for (const textLine of deckMainArrDirty) {
-	// 		if (textLine.length == 0) {
-	// 			// skip empty lines.
-	// 			continue;
-	// 		}
-	// 		let newEntry: IDecklistEntry | null = await toDecklistEntry(textLine);
-	// 		// data validation
-	// 		if (newEntry !== null) {
-	// 			// don't push entry if it is = null instead of being of type IDecklistEntry).
-	// 			if (
-	// 				newEntry.name.length !== 0 && // name must not be empty string
-	// 				!Number.isNaN(newEntry.count) && // count must be a number...
-	// 				newEntry.count >= 1 // ...that is greater than 0
-	// 			) {
-	// 				deckMainArr.push(newEntry); // decklist entry successfully added to decklist.
-	// 			}
-	// 		}
-	// 	}
-
-	// 	console.log("deckMainArr", deckMainArr);
-
-	// 	// sideboard:
-	// 	// convert each text line into an IDecklistEntry.
-	// 	// "4 Mox Opal" -> {name:"Mox Opal", count:4}
-	// 	for (const textLine of deckSBArrDirty) {
-	// 		if (textLine.length == 0) {
-	// 			// skip empty lines.
-	// 			continue;
-	// 		}
-	// 		let newEntry: IDecklistEntry | null = await toDecklistEntry(textLine);
-	// 		// data validation
-	// 		if (newEntry !== null) {
-	// 			// don't push entry if it is = null instead of being of type IDecklistEntry).
-	// 			if (
-	// 				newEntry.name.length !== 0 && // name must not be empty string
-	// 				!Number.isNaN(newEntry.count) && // count must be a number...
-	// 				newEntry.count >= 1 // ...that is greater than 0
-	// 			) {
-	// 				deckSBArr.push(newEntry); // decklist entry successfully added to decklist.
-	// 			}
-	// 		}
-	// 	}
-	// 	console.log("deckSBArr", deckSBArr);
-
-	// 	// decklist arrays completed!
-	// 	setDeckName(rawDeckName);
-	// 	setDeckMain(deckMainArr);
-	// 	setDeckSB(deckSBArr);
-	// 	setDeck({
-	// 		name: rawDeckName,
-	// 		main: deckMain,
-	// 		sideboard: deckSB,
-	// 	});
-
-	// 	// create decklist array with ICard objects ()
-	// 	// ...TODO
-
-	// 	// deckbuilding rules (>=60 cards. <=4 of a kind)
-	// 	// ...TODO
-
-	// 	// save deck to LocalStorage
-	// 	// ...
-	// 	console.log("deck:", deck);
-
-	// 	// localStorage.setItem("deck", await JSON.stringify(deck));
-	// 	localStorage.setItem("deck", JSON.stringify(deck));
-	// };
-
 	const handleLookup = async (cname: string) => {
 		const resp = await parseCardName(cname);
 		console.log("cname length", cname.length);
@@ -301,22 +208,18 @@ export function DeckBuilder(): ReactElement {
 
 	const handleLoadDeck = () => {
 		// todo 241014
-		// 1. load deck object from localstorage
-		// 2. setDeck(name, main, sb) <- IDeck object
-		// 3. setRawDeckName(name)
-		// 4. maindeck: convert array of decklist entries into array of strings, then setRawDeckMain
-		// 5. sideboard: convert array of decklist entries into array of strings, then setRawDeckSB
-		// 6.
-
-		// to deck state and to decklist form states.
+		// 1. load IDeck object from localStorage
+		// 2. save the IDeckobject with setDeck()
+		// 3. convert IDeck object to raw decklist strings and send those to decklist form textboxes)
 
 		console.log("handleLoadDeck(): ");
 
-		// 1. load deck object from localstorage
+		// 1. load IDeck object from localStorage
 		const deckToLoad = loadDeck(); // IDeck object (or null if error)
 		console.log("deckToLoad: ", deckToLoad);
+
+		// 2. save the IDeckobject with setDeck()
 		if (deckToLoad !== null) {
-			// 2. setDeck
 			setDeck({
 				// save deck object to state
 				name: deckToLoad.name,
@@ -324,38 +227,14 @@ export function DeckBuilder(): ReactElement {
 				sideboard: deckToLoad.sideboard,
 			});
 
-			// set raws
+			// 3. set raws
 			const [rawNameStr, rawMainStr, rawSideboardStr] = createStringsFromDeck(deckToLoad);
-
-			console.log("rawNameStr: ", rawNameStr);
-			console.log("rawMainStr: ", rawMainStr);
-			console.log("rawSideboardStr: ", rawSideboardStr);
-
 			setRawDeckName(rawNameStr);
 			setRawDeckMain(rawMainStr);
 			setRawDeckSB(rawSideboardStr);
-
-			// 3. setRawDeckName
-			/*
-			const rawName: string = deckToLoad.name;
-			const rawMain: string = "";
-			const rawSideboard: string = "";
-			*/
-
-			// const rawMain: string = deckToLoad.main.join("\n");
-			// const rawSideboard: string = deckToLoad.sideboard.join("\n");
-
-			/*
-			console.log(rawName);
-			console.log(rawMain);
-			console.log(rawSideboard);
-			console.log("");
-			let foo = ["4 mox opal", "4 mox lotus"];
-			console.log(foo);
-			setRawDeckName(rawName);
-			setRawDeckMain(rawMain);
-			setRawDeckSB(rawSideboard);
-			*/
+			console.log("rawNameStr: ", rawNameStr);
+			console.log("rawMainStr: ", rawMainStr);
+			console.log("rawSideboardStr: ", rawSideboardStr);
 		}
 	};
 
@@ -401,7 +280,7 @@ export function DeckBuilder(): ReactElement {
 				</form>
 				{/* <DecklistForm /> */}
 				<button onClick={handleLoadDeck}>Load deck!</button>
-				{/* <button onClick={}>Load deck!</button> */}
+				<button onClick={batchCheck}>parse liste</button>
 			</section>
 		</>
 	);
