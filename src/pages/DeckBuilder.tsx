@@ -1,6 +1,6 @@
 import { FormEvent, ReactElement, useState, useContext } from "react";
-import { IDeck, IDecklistEntry, parsedCard } from "../interfaces";
-import { parseCardName } from "../utils";
+import { IDeck, IDecklistEntry, IDecklistEntryFull } from "../interfaces";
+import { baseURL, parseCardName } from "../utils";
 import { DeckContext } from "../context";
 
 export function DeckBuilder(): ReactElement {
@@ -55,9 +55,10 @@ export function DeckBuilder(): ReactElement {
 		// console.log("decklistEntry", decklistEntry);
 
 		if (
-			// more data validation
-			decklistEntry.name.length === 0 ||
-			decklistEntry.count === 0
+			// more data validation (for culling invalid decklist entries)
+			decklistEntry.name.length == 0 ||
+			decklistEntry.count == 0 ||
+			Number.isNaN(decklistEntry.count)
 		) {
 			return null;
 		}
@@ -151,22 +152,48 @@ export function DeckBuilder(): ReactElement {
 		};
 	}
 
+	/* 
+	async function batchFetch(cards: IDecklistEntry[]) {
+		// todo 241015
+		// fetches card info for multiple cards with a single API request.
+		// example url: https://api.scryfall.com/cards/search?q=name:Lightning%20Bolt%20or%20name:Counterspell%20or%20name:Giant%20Growth
+
+		const cardNamesTemp = ["Lightning Bolt", "Counterspell", "Giant Growth"]; // temp
+		let url = `${baseURL}/cards/search?q=name:`;
+
+		for (const entry of cards) {
+		}
+
+		const query = cardNamesTemp.map((name) => `name:${encodeURIComponent(name)}`).join(" or ");
+
+		fetch(`https://api.scryfall.com/cards/search?q=${query}`)
+			.then((response) => response.json())
+			.then((data) => {
+				console.log(data);
+				// Process the card data here
+			})
+			.catch((error) => {
+				console.error("Error fetching card data:", error);
+			});
+	}
+	 */
+
 	async function batchCheck(input: IDecklistEntry[]) {
-		const cards: parsedCard[] = [];
+		const cards: IDecklistEntryFull[] = [];
 		for (const entry of input) {
 			const nameToCheck: string = entry.name;
-			const card: parsedCard = {
+			const card: IDecklistEntryFull = {
 				name: entry.name,
-				is_found: false,
 				count: entry.count,
+				is_real: false,
 			};
 			let parsedName = await parseCardName(nameToCheck);
 
 			if (parsedName.length === 0) {
 				// if length = 0, card name is invalid
-				card.is_found = false;
+				card.is_real = false;
 			} else {
-				card.is_found = true;
+				card.is_real = true;
 			}
 			cards.push(card);
 		}
@@ -176,6 +203,7 @@ export function DeckBuilder(): ReactElement {
 
 	async function deckCheck() {
 		if (deck) {
+			// todo: combine
 			const checkedMain = await batchCheck(deck.main);
 			const checkedSideboard = await batchCheck(deck.sideboard);
 			// spara till context

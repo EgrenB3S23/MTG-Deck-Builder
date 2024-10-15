@@ -45,7 +45,8 @@ export interface IDecklistEntry {
 	//  used for single cards in a decklist. each line "4 Mox Opal" turns into {"Mox Opal", 4}
 	name: string;
 	count: number;
-	// is_found?: boolean
+	// is_real?: boolean;
+	// card_info?: ICard;
 }
 
 export interface IDeck {
@@ -53,9 +54,33 @@ export interface IDeck {
 	main: IDecklistEntry[];
 	sideboard: IDecklistEntry[];
 }
-export interface parsedCard {
+export interface IDecklistEntryFull {
+	// like IDecklistEntry, but with card data and 'exists'
 	name: string;
-	is_found: boolean;
 	count: number;
+	is_real?: boolean;
 	card_info?: ICard;
+}
+
+export interface IDeckFull {
+	name: string;
+	main: IDecklistEntryFull[];
+	sideboard: IDecklistEntryFull[];
+	// is_real?: boolean;
+	// get legalities(): { [key: string]: string }; // define legalities as a getter
+	// legalities: {
+	// 	standard: string;
+	// 	modern: string;
+	// 	legacy: string;
+	// 	vintage: string;
+	// 	pioneer: string;
+	// 	historic: string;
+	// 	commander: string;
+	// 	[key: string]: string; // catch-all for any additional formats. (any other field under 'legalities' will be typed as a string)
+	// };
+}
+
+export interface ICardNameReport {
+	name: string;
+	is_real: boolean;
 }
