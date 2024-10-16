@@ -6,6 +6,67 @@ export const baseURL = "https://api.scryfall.com";
 // https://scryfall.com/cards/search?q="mox opal"
 // https://api.scryfall.com/cards/named?exact=mox+opal
 
+// todo: remove this (testing purposes)
+
+export let dummyDeck = {
+	name: "flowers",
+	main: [
+		{
+			name: "black lotus",
+			count: 4,
+		},
+		{
+			name: "lotus petal",
+			count: 4,
+		},
+		{
+			name: "lotus bloom",
+			count: 4,
+		},
+		{
+			name: "3",
+			count: 3,
+		},
+		{
+			name: "a",
+			count: 2,
+		},
+	],
+	sideboard: [
+		{
+			name: "mox lotus",
+			count: 4,
+		},
+		{
+			name: "chrome mox",
+			count: 4,
+		},
+	],
+};
+
+export let dummyMain = [
+	{
+		name: "black lotus",
+		count: 4,
+	},
+	{
+		name: "lotus petal",
+		count: 4,
+	},
+	{
+		name: "lotus bloom",
+		count: 4,
+	},
+	// {
+	// 	name: "3",
+	// 	count: 3,
+	// },
+	// {
+	// 	name: "a",
+	// 	count: 2,
+	// },
+];
+
 export async function parseCardName(cardName: string) {
 	// todo 241015: OLD
 	// TO BE REPLACED by fetchCard()
@@ -27,6 +88,7 @@ export async function parseCardName(cardName: string) {
 			okSoFar = false;
 		} else if ((await data.object) === "card") {
 			console.log(`Card "${cardName}" found!`);
+			console.log(`Card "${data.name}" found!`);
 			retVal = capitalizeWords(data.name); // "mox opal" -> "Mox Opal"
 		}
 	} catch (e) {
@@ -75,7 +137,7 @@ export const arrowFetchCard = async (cardName: string): Promise<ICard | null> =>
 	// const cardNames = ["Mox Opal", "Black Lotus", "Sol Ring"];
 	// const data = await Promise.all(cardNames.map(arrowFetchCard));
 
-	console.log(`Fetching card "${cardName}"...`);
+	console.log(`In arrowFetchCard(). Fetching card "${cardName}"...`);
 	let okSoFar = true;
 	let retVal: ICard | null = null;
 
