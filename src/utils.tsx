@@ -176,8 +176,10 @@ async function fetchMultipleCards(cardNames: string[]) {
 	return results;
 }
 
-//alt:  export const capitalizeWords = (str: string): string => {
 export function capitalizeWords(str: string): string {
+	// todo: maybe swap to:
+	// export const capitalizeWords = (str: string): string => {
+
 	// takes a string of words and capitalizes the first char of each word.
 	// example input: "hello WORLD"
 	// example output: "Hello World"
