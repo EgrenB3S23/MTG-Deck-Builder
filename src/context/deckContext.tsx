@@ -1,14 +1,14 @@
 import { createContext, useState, ReactNode } from "react";
-import { IDecklistEntryFull } from "../interfaces";
+import { IDecklistEntry } from "../interfaces";
 
 // Definiera typen för Context-värdet
 interface MyContextType {
 	name: string;
-	deckMain: IDecklistEntryFull[];
-	deckSideboard: IDecklistEntryFull[];
+	deckMain: IDecklistEntry[];
+	deckSideboard: IDecklistEntry[];
 	setName: (value: string) => void;
-	setDeckMain: (value: IDecklistEntryFull[]) => void;
-	setDeckSideboard: (value: IDecklistEntryFull[]) => void;
+	setDeckMain: (value: IDecklistEntry[]) => void;
+	setDeckSideboard: (value: IDecklistEntry[]) => void;
 }
 
 // Skapa en Context med en initial typ
@@ -21,8 +21,8 @@ interface MyProviderProps {
 
 export function DeckProvider({ children }: MyProviderProps) {
 	const [name, setName] = useState<string>("");
-	const [deckMain, setDeckMain] = useState<IDecklistEntryFull[]>([]);
-	const [deckSideboard, setDeckSideboard] = useState<IDecklistEntryFull[]>([]);
+	const [deckMain, setDeckMain] = useState<IDecklistEntry[]>([]);
+	const [deckSideboard, setDeckSideboard] = useState<IDecklistEntry[]>([]);
 
 	return <DeckContext.Provider value={{ name, setName, deckMain, setDeckMain, deckSideboard, setDeckSideboard }}>{children}</DeckContext.Provider>;
 }

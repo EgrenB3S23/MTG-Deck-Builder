@@ -1,6 +1,6 @@
 import { FormEvent, ReactElement, useState, useContext } from "react";
 import { IDeck, IDecklistEntry, IDecklistEntryFull } from "../interfaces";
-import { baseURL, parseCardName } from "../utils";
+import { arrowFetchCard, baseURL, dummyDeck, dummyMain, parseCardName } from "../utils";
 import { DeckContext } from "../context";
 
 export function DeckBuilder(): ReactElement {
@@ -178,7 +178,8 @@ export function DeckBuilder(): ReactElement {
 	}
 	 */
 
-	async function batchCheck(input: IDecklistEntry[]) {
+	async function batchCheckOld(input: IDecklistEntry[]) {
+		// deprecated
 		const cards: IDecklistEntryFull[] = [];
 		for (const entry of input) {
 			const nameToCheck: string = entry.name;
@@ -187,7 +188,7 @@ export function DeckBuilder(): ReactElement {
 				count: entry.count,
 				is_real: false,
 			};
-			let parsedName = await parseCardName(nameToCheck);
+			let parsedName = await parseCardName(nameToCheck); // replace parseCardname with arrowFetchCard()
 
 			if (parsedName.length === 0) {
 				// if length = 0, card name is invalid
@@ -201,15 +202,75 @@ export function DeckBuilder(): ReactElement {
 		return cards;
 	}
 
-	async function deckCheck() {
+	async function batchCheck(input: IDecklistEntry[]) {
+		// todo 241015: replace batchCheckOld with this.
+		// 1. takes a list of decklist entries,
+		// 2. fetches card data for each card in list
+		// 3. responses will be a mix of <ICard | null>
+		// 4. for each returned card object:
+		// 4.1. add card info
+		// 4.2. add "is_real" flag
+		// 4.3. replace name with corrected name ("moxopal"-> "Mox Opal")
+
+		// const [...cardNames] = input.name;
+		// const data = await Promise.all(cardNames.map(arrowFetchCard));
+
+		// const start = new Date().getTime(); // start timer to measure function performance
+
+		const retVal = input;
+		const data = await Promise.all(input.map((entry) => arrowFetchCard(entry.name))); // "for each card in list, fetch card info."
+
+		for (let i = 0; i < retVal.length; i++) {
+			// if(data[i] !== null && retVal[i] !== null){
+			if (data[i] && retVal[i]) {
+				//if here, card exists!
+				// const entry = retVal[i];
+				retVal[i].card_info = data[i]!; // ! : non-null assertion operator ("i hereby solemnly swear that data[i] is not null")
+				if (retVal[i].card_info!.name) {
+					retVal[i].name = retVal[i].card_info!.name; // replace written name (i.e. "moxlotus") with correctly spaced & capitalized name ("Mox Lotus") from card_info.
+					retVal[i].is_real = true;
+				} else retVal[i].is_real = false;
+			} else retVal[i].is_real = false;
+		}
+		return retVal;
+	}
+
+	async function deckCheckOld() {
+		//todo241016: replace with dechCheckNew
+
+		console.log(`in deckCheckOld()`);
+		const start = new Date().getTime(); // start timer to measure function performance
+
 		if (deck) {
 			// todo: combine
-			const checkedMain = await batchCheck(deck.main);
-			const checkedSideboard = await batchCheck(deck.sideboard);
+			const checkedMain = await batchCheckOld(deck.main);
+			const checkedSideboard = await batchCheckOld(deck.sideboard);
 			// spara till context
 			deckContext?.setDeckMain(checkedMain);
 			deckContext?.setDeckSideboard(checkedSideboard);
 		}
+
+		let elapsed = new Date().getTime() - start; // end timer
+		console.log(`deckCheckOld() finished. Time elapsed: ${elapsed} ms.`);
+	}
+
+	async function deckCheck(deck: IDeck) {
+		// todo 241016: replace deckCheckOld with this when finished
+		// NOT DONE
+
+		console.log(`in deckCheck()`);
+		const start = new Date().getTime(); // start timer to measure function performance
+
+		if (deck) {
+			const checkedMain = await batchCheck(deck.main);
+			const checkedSideboard = await batchCheck(deck.sideboard);
+			deckContext?.setName(deck.name);
+			deckContext?.setDeckMain(checkedMain);
+			deckContext?.setDeckSideboard(checkedSideboard);
+		}
+
+		let elapsed = new Date().getTime() - start; // end timer
+		console.log(`deckCheck() finished. Time elapsed: ${elapsed} ms.`);
 	}
 
 	const handleSaveDeck = (e: FormEvent<HTMLFormElement>) => {
@@ -217,6 +278,14 @@ export function DeckBuilder(): ReactElement {
 
 		// 1. convert textbox data into deck (IDeck) object.
 		// 2. save deck object to Local Storage
+		// 3. TODO: fetch & save card info to each card in decklist (and set is_real = true | false)
+
+		// ¤ intended process: (TODO as of 241016)
+		// >	handleSaveDeck()
+		// >>		deckCheck(deck: IDeck)						return format: IDeck
+		// >>>			batchCheck(maindeck: IDecklistEntry[])	return format: IDecklistEntry[] w/ card_info
+		// >>>			batchCheck(sideboard: IDecklistEntry[])	return format: IDecklistEntry[] w/ card_info
+		// >>>>				arrowFetchCard(card name: string)		done. return format: <ICard | null>
 
 		e.preventDefault();
 
@@ -314,7 +383,9 @@ export function DeckBuilder(): ReactElement {
 				</form>
 				{/* <DecklistForm /> */}
 				<button onClick={handleLoadDeck}>Load deck!</button>
-				<button onClick={deckCheck}>parse cards</button>
+				<button onClick={deckCheckOld}>parse cards</button>
+				<button onClick={() => batchCheck(deck!.main)}>{`test batchCheck()`}</button> {/* sloppy NNA, but its for testing */}
+				<button onClick={() => deckCheck(deck!)}>{`test deckCheck()`}</button> {/* sloppy NNA, but its for testing */}
 			</section>
 		</>
 	);
