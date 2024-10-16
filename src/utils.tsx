@@ -67,6 +67,7 @@ export let dummyMain = [
 	// },
 ];
 
+/* 
 export async function parseCardName(cardName: string) {
 	// todo 241015: OLD
 	// TO BE REPLACED by fetchCard()
@@ -102,6 +103,7 @@ export async function parseCardName(cardName: string) {
 	}
 	return retVal;
 }
+ */
 
 export async function fetchCard(cardName: string) {
 	// takes a card name like "Mox Opal" and returns the card info as an ICard object if the card exists. Otherwise returns null.
