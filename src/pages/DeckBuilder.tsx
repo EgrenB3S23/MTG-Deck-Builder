@@ -178,7 +178,7 @@ export function DeckBuilder(): ReactElement {
 	}
 	 */
 
-	async function batchCheck(input: IDecklistEntry[]) {
+	async function batchCheckOld(input: IDecklistEntry[]) {
 		// deprecated
 		const cards: IDecklistEntryFull[] = [];
 		for (const entry of input) {
@@ -202,8 +202,8 @@ export function DeckBuilder(): ReactElement {
 		return cards;
 	}
 
-	async function batchCheckNew(input: IDecklistEntry[]) {
-		// todo 241015: replace batchCheck with this.
+	async function batchCheck(input: IDecklistEntry[]) {
+		// todo 241015: replace batchCheckOld with this.
 		// 1. takes a list of decklist entries,
 		// 2. fetches card data for each card in list
 		// 3. responses will be a mix of <ICard | null>
@@ -220,9 +220,6 @@ export function DeckBuilder(): ReactElement {
 		const retVal = input;
 		const data = await Promise.all(input.map((entry) => arrowFetchCard(entry.name))); // "for each card in list, fetch card info."
 
-		// let elapsed = new Date().getTime() - start; // end timer
-		// console.log(`batchCheckNew() attempted ${data.length} card fetches. Time elapsed: ${elapsed} ms.`);
-
 		for (let i = 0; i < retVal.length; i++) {
 			// if(data[i] !== null && retVal[i] !== null){
 			if (data[i] && retVal[i]) {
@@ -238,38 +235,40 @@ export function DeckBuilder(): ReactElement {
 		return retVal;
 	}
 
-	async function deckCheck() {
+	async function deckCheckOld() {
 		//todo241016: replace with dechCheckNew
 
-		console.log(`in deckCheck()`);
+		console.log(`in deckCheckOld()`);
 		const start = new Date().getTime(); // start timer to measure function performance
 
 		if (deck) {
 			// todo: combine
-			const checkedMain = await batchCheck(deck.main);
-			const checkedSideboard = await batchCheck(deck.sideboard);
+			const checkedMain = await batchCheckOld(deck.main);
+			const checkedSideboard = await batchCheckOld(deck.sideboard);
 			// spara till context
 			deckContext?.setDeckMain(checkedMain);
 			deckContext?.setDeckSideboard(checkedSideboard);
 		}
 
 		let elapsed = new Date().getTime() - start; // end timer
-		console.log(`deckCheck() finished. Time elapsed: ${elapsed} ms.`);
+		console.log(`deckCheckOld() finished. Time elapsed: ${elapsed} ms.`);
 	}
 
-	async function deckCheckNew(deck: IDeck) {
-		// todo 241016: replace deckCheck with this when finished
+	async function deckCheck(deck: IDeck) {
+		// todo 241016: replace deckCheckOld with this when finished
 		// NOT DONE
 
 		console.log(`in deckCheck()`);
 		const start = new Date().getTime(); // start timer to measure function performance
 
 		if (deck) {
-			const checkedMain = await batchCheckNew(deck.main); // todo 241016: batchCheckNew isn't finished
-			const checkedSideboard = await batchCheckNew(deck.sideboard);
+			const checkedMain = await batchCheck(deck.main);
+			const checkedSideboard = await batchCheck(deck.sideboard);
+			deckContext?.setName(deck.name);
 			deckContext?.setDeckMain(checkedMain);
 			deckContext?.setDeckSideboard(checkedSideboard);
 		}
+
 		let elapsed = new Date().getTime() - start; // end timer
 		console.log(`deckCheck() finished. Time elapsed: ${elapsed} ms.`);
 	}
@@ -283,9 +282,9 @@ export function DeckBuilder(): ReactElement {
 
 		// ¤ intended process: (TODO as of 241016)
 		// >	handleSaveDeck()
-		// >>		deckCheckNew(deck: IDeck)						return format: IDeck
-		// >>>			batchCheckNew(maindeck: IDecklistEntry[])	return format: IDecklistEntry[] w/ card_info
-		// >>>			batchCheckNew(sideboard: IDecklistEntry[])	return format: IDecklistEntry[] w/ card_info
+		// >>		deckCheck(deck: IDeck)						return format: IDeck
+		// >>>			batchCheck(maindeck: IDecklistEntry[])	return format: IDecklistEntry[] w/ card_info
+		// >>>			batchCheck(sideboard: IDecklistEntry[])	return format: IDecklistEntry[] w/ card_info
 		// >>>>				arrowFetchCard(card name: string)		done. return format: <ICard | null>
 
 		e.preventDefault();
@@ -384,9 +383,9 @@ export function DeckBuilder(): ReactElement {
 				</form>
 				{/* <DecklistForm /> */}
 				<button onClick={handleLoadDeck}>Load deck!</button>
-				<button onClick={deckCheck}>parse cards</button>
-				<button onClick={() => batchCheckNew(deck!.main)}>{`test batchCheckNew()`}</button> {/* sloppy NNA, but its for testing */}
-				<button onClick={() => deckCheckNew(deck!)}>{`test deckCheckNew()`}</button> {/* sloppy NNA, but its for testing */}
+				<button onClick={deckCheckOld}>parse cards</button>
+				<button onClick={() => batchCheck(deck!.main)}>{`test batchCheck()`}</button> {/* sloppy NNA, but its for testing */}
+				<button onClick={() => deckCheck(deck!)}>{`test deckCheck()`}</button> {/* sloppy NNA, but its for testing */}
 			</section>
 		</>
 	);
