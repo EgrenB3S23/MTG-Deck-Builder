@@ -2,7 +2,7 @@ import { createContext, useState, ReactNode } from "react";
 import { IDecklistEntry } from "../interfaces";
 
 // Definiera typen för Context-värdet
-interface MyContextType {
+interface DeckContextType {
 	name: string;
 	deckMain: IDecklistEntry[];
 	deckSideboard: IDecklistEntry[];
@@ -12,14 +12,14 @@ interface MyContextType {
 }
 
 // Skapa en Context med en initial typ
-export const DeckContext = createContext<MyContextType | undefined>(undefined);
+export const DeckContext = createContext<DeckContextType | undefined>(undefined);
 
 // Definiera typen för props (i detta fall bara `children`)
-interface MyProviderProps {
+interface DeckProviderProps {
 	children: ReactNode;
 }
 
-export function DeckProvider({ children }: MyProviderProps) {
+export function DeckProvider({ children }: DeckProviderProps) {
 	const [name, setName] = useState<string>("");
 	const [deckMain, setDeckMain] = useState<IDecklistEntry[]>([]);
 	const [deckSideboard, setDeckSideboard] = useState<IDecklistEntry[]>([]);
