@@ -3,17 +3,20 @@ import { Outlet } from "react-router-dom";
 import "../css/App.css";
 import { Footer, Header } from ".";
 import { DeckProvider } from "../context";
+import { DecksProvider } from "../context/DecksContext";
 
 export function App(): ReactElement {
 	return (
 		<>
-			<DeckProvider>
-				<Header />
-				<main>
-					<Outlet />
-				</main>
-				<Footer />
-			</DeckProvider>
+			<DecksProvider>
+				<DeckProvider>
+					<Header />
+					<main>
+						<Outlet />
+					</main>
+					<Footer />
+				</DeckProvider>
+			</DecksProvider>
 		</>
 	);
 }

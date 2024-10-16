@@ -201,3 +201,9 @@ export function capitalizeWords(str: string): string {
 
 	return stringCapitalized;
 }
+
+export const generateUniqueID = (prefix: string = "deck") => {
+	// usage: let id = generateUniqueID() 			// "deck-12345678"
+	// usage: let id = generateUniqueID("article")	// "article-12345678"
+	return `${prefix}-${Date.now()}`;
+};

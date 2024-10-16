@@ -2,6 +2,7 @@ import { FormEvent, ReactElement, useState, useContext } from "react";
 import { IDeck, IDecklistEntry } from "../interfaces";
 import { arrowFetchCard } from "../utils";
 import { DeckContext } from "../context";
+import { SelectDeck } from "../components";
 
 export function DeckBuilder(): ReactElement {
 	// raw textbox data:
@@ -396,6 +397,7 @@ export function DeckBuilder(): ReactElement {
 				<button onClick={() => batchCheck(deck!.main)}>{`test batchCheck()`}</button> {/* sloppy NNA, but its for testing */}
 				<button onClick={() => deckCheck(deck!)}>{`test deckCheck()`}</button> {/* sloppy NNA, but its for testing */}
 			</section>
+			<SelectDeck />
 		</>
 	);
 }
