@@ -378,7 +378,7 @@ export function DeckBuilder(): ReactElement {
 		deckCheck(deck!);
 
 		let elapsed = new Date().getTime() - start; // end timer
-		console.log(`deckCheck() finished. Time elapsed: ${elapsed} ms.`);
+		console.log(`deckCheck() from handleSaveDeck finished. Time elapsed: ${elapsed} ms.`);
 	};
 
 	const handleLookup = async (cname: string) => {
