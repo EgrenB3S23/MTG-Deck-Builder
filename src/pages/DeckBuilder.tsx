@@ -28,13 +28,13 @@ export function DeckBuilder(): ReactElement {
 
 	// load deck from localStorage return deck as IDeck object.
 	const loadDeck = () => {
-		console.log("inLoadDeck()");
+		console.log("in LoadDeck()");
 		const deckFromLocalStorage = localStorage.getItem("deckUnchecked");
 		console.log("deckFromLocalStorage:", deckFromLocalStorage);
 
 		if (deckFromLocalStorage) {
 			const deckToLoad: IDeck = JSON.parse(deckFromLocalStorage);
-			console.log("JSON.parse(deckFromLocalStorage):", JSON.parse(deckFromLocalStorage));
+			// console.log("JSON.parse(deckFromLocalStorage):", JSON.parse(deckFromLocalStorage));
 			console.log("deckToLoad: (should be identical to previous line)", deckToLoad);
 			return deckToLoad;
 		} else return null;
@@ -323,8 +323,8 @@ export function DeckBuilder(): ReactElement {
 		console.log(`deckCheckOld() finished. Time elapsed: ${elapsed} ms.`);
 	}
 
-	async function deckCheck(deck: IDeck) {
-		// todo 241016: replace deckCheckOld with this when finished
+	async function deckCheckOld2(deck: IDeck) {
+		// replaced 241018
 		// NOT DONE
 
 		console.log(`in deckCheck()`);
@@ -333,7 +333,30 @@ export function DeckBuilder(): ReactElement {
 		if (deck) {
 			const checkedMain = await batchCheck(deck.main);
 			const checkedSideboard = await batchCheck(deck.sideboard);
+			console.log();
+
 			deckContext?.setName(deck.name);
+			deckContext?.setDeckMain(checkedMain);
+			deckContext?.setDeckSideboard(checkedSideboard);
+		}
+
+		let elapsed = new Date().getTime() - start; // end timer
+		console.log(`deckCheck() finished. Time elapsed: ${elapsed} ms.`);
+	}
+
+	async function deckCheck(deckIn: IDeck) {
+		// todo 241016: replace deckCheckOld with this when finished
+		// NOT DONE
+
+		console.log(`in deckCheck()`);
+		const start = new Date().getTime(); // start timer to measure function performance
+
+		if (deckIn) {
+			const checkedMain = await batchCheck(deckIn.main);
+			const checkedSideboard = await batchCheck(deckIn.sideboard);
+			console.log();
+
+			deckContext?.setName(deckIn.name);
 			deckContext?.setDeckMain(checkedMain);
 			deckContext?.setDeckSideboard(checkedSideboard);
 		}
@@ -363,19 +386,26 @@ export function DeckBuilder(): ReactElement {
 		// get a complete deck object from textbox strings:
 		let deckUnchecked: IDeck = createDeckFromStrings(rawDeckName, rawDeckMain, rawDeckSB);
 		console.log("deckUnchecked: ", deckUnchecked);
-		setDeck({
-			//
-			name: deckUnchecked.name,
-			main: deckUnchecked.main,
-			sideboard: deckUnchecked.sideboard,
-		});
+		console.log("deck state before setDeck: ", deck);
+		// setDeck({
+		// 	//
+		// 	name: deckUnchecked.name,
+		// 	main: deckUnchecked.main,
+		// 	sideboard: deckUnchecked.sideboard,
+		// });
+		setDeck(deckUnchecked);
+		console.log("deck state after setDeck: ", deck);
 		localStorage.setItem("deckUnchecked", JSON.stringify(deckUnchecked));
 		//
 
 		const start = new Date().getTime(); // start timer to measure function performance
 		console.log("starting timer in handleSaveDeck before deckCheck()...");
-
-		deckCheck(deck!);
+		console.log("deck before deckCheck:", deck);
+		// deckCheck(deck!).then(() => console.log("deck after deckCheck:", deck));
+		deckCheck(deckUnchecked!) //
+			.then(() => console.log("deckUnchecked after deckCheck:", deckUnchecked))
+			.then(() => localStorage.setItem("deckUnchecked", JSON.stringify(deckUnchecked)))
+			.then(() => console.log("deck LS after deckCheck AFTER setItem:", JSON.parse(localStorage.getItem("deckUnchecked") || "NULL DECK OMG")));
 
 		let elapsed = new Date().getTime() - start; // end timer
 		console.log(`deckCheck() from handleSaveDeck finished. Time elapsed: ${elapsed} ms.`);
