@@ -170,3 +170,9 @@ export interface ICardNameReport {
 	name: string;
 	is_real: boolean;
 }
+
+export interface IDeckStrings {
+	nameStr: string;
+	mainStr: string;
+	sideboardStr: string;
+}

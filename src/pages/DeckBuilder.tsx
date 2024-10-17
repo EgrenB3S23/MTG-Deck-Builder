@@ -1,6 +1,6 @@
 import { FormEvent, ReactElement, useState, useContext } from "react";
-import { IDeck, IDecklistEntry } from "../interfaces";
-import { arrowFetchCard } from "../utils";
+import { IDeck, IDecklistEntry, IDecklistEntryFull, IDeckStrings } from "../interfaces";
+import { arrowFetchCard, baseURL, dummyDeck, dummyMain, parseCardName } from "../utils";
 import { DeckContext } from "../context";
 
 export function DeckBuilder(): ReactElement {
@@ -28,10 +28,14 @@ export function DeckBuilder(): ReactElement {
 
 	// load deck from localStorage return deck as IDeck object.
 	const loadDeck = () => {
-		const deckfromLocalStorage = localStorage.getItem("deckUnchecked");
+		console.log("in LoadDeck()");
+		const deckFromLocalStorage = localStorage.getItem("deckUnchecked");
+		console.log("deckFromLocalStorage:", deckFromLocalStorage);
 
-		if (deckfromLocalStorage) {
-			const deckToLoad: IDeck = JSON.parse(deckfromLocalStorage);
+		if (deckFromLocalStorage) {
+			const deckToLoad: IDeck = JSON.parse(deckFromLocalStorage);
+			// console.log("JSON.parse(deckFromLocalStorage):", JSON.parse(deckFromLocalStorage));
+			console.log("deckToLoad: (should be identical to previous line)", deckToLoad);
 			return deckToLoad;
 		} else return null;
 	};
@@ -65,7 +69,68 @@ export function DeckBuilder(): ReactElement {
 		return decklistEntry; // format: {name: "Mox Opal", count: 4}
 	}
 
+	function createStringsFromDeckNew(input: IDeck): IDeckStrings {
+		console.log("in createStringsFromDeck...");
+		console.log("input.name", input.name);
+		console.log("input.main", input.main);
+		console.log("input.sideboard", input.sideboard);
+
+		// todo 241015
+		// input: an IDeck object.
+		// output: array of 3 strings formatted as intended for the 3 decklist form textboxes.
+		// example input:
+		/*
+		{
+			name: "Hello deck!",
+			main: [
+				{name: "Mox opal", count: 4},
+				{name: "Mox lotus", count: 4}
+			],
+			sideboard: [
+				{name: "Mox opal", count: 4},
+				{name: "Mox lotus", count: 4}
+			]
+		}
+		*/
+		// example output:
+		/* 
+		[
+			"Hello deck!",
+			"4 Mox opal\n4 Mox lotus",
+			"4 Mox opal\n4 Mox lotus",
+		]
+		*/
+
+		const nameStrOutput = input.name;
+		let mainStrOutput = "";
+		let sideboardStrOutput = "";
+
+		for (const entry of input.main) {
+			mainStrOutput = `${mainStrOutput}\n${entry.count} ${entry.name}`;
+		}
+
+		for (const entry of input.sideboard) {
+			sideboardStrOutput = `${sideboardStrOutput}\n${entry.count} ${entry.name}`;
+		}
+
+		console.log("nameStrOutput trim:", nameStrOutput);
+		console.log("mainStrOutput trim:", mainStrOutput);
+		console.log("sideboardStrOutput trim:", sideboardStrOutput);
+
+		return {
+			nameStr: nameStrOutput.trim(),
+			mainStr: mainStrOutput.trim(),
+			sideboardStr: sideboardStrOutput.trim(),
+		};
+		// return [nameStr.trim(), mainStr.trim(), sideboardStr.trim()];
+	}
+
 	function createStringsFromDeck(input: IDeck): [string, string, string] {
+		console.log("in createStringsFromDeck...");
+		console.log("input.name", input.name);
+		console.log("input.main", input.main);
+		console.log("input.sideboard", input.sideboard);
+
 		// todo 241015
 		// input: an IDeck object.
 		// output: array of 3 strings formatted as intended for the 3 decklist form textboxes.
@@ -103,6 +168,10 @@ export function DeckBuilder(): ReactElement {
 		for (const entry of input.sideboard) {
 			sideboardStr = `${sideboardStr}\n${entry.count} ${entry.name}`;
 		}
+
+		console.log("nameStr trim:", nameStr);
+		console.log("mainStr trim:", mainStr);
+		console.log("sideboardStr trim:", sideboardStr);
 
 		return [nameStr.trim(), mainStr.trim(), sideboardStr.trim()];
 	}
@@ -258,8 +327,8 @@ export function DeckBuilder(): ReactElement {
 	}
  */
 
-	async function deckCheck(deck: IDeck) {
-		// todo 241016: replace deckCheckOld with this when finished
+	async function deckCheckOld2(deck: IDeck) {
+		// replaced 241018
 		// NOT DONE
 
 		console.log(`in deckCheck()`);
@@ -268,7 +337,30 @@ export function DeckBuilder(): ReactElement {
 		if (deck) {
 			const checkedMain = await batchCheck(deck.main);
 			const checkedSideboard = await batchCheck(deck.sideboard);
+			console.log();
+
 			deckContext?.setName(deck.name);
+			deckContext?.setDeckMain(checkedMain);
+			deckContext?.setDeckSideboard(checkedSideboard);
+		}
+
+		let elapsed = new Date().getTime() - start; // end timer
+		console.log(`deckCheck() finished. Time elapsed: ${elapsed} ms.`);
+	}
+
+	async function deckCheck(deckIn: IDeck) {
+		// todo 241016: replace deckCheckOld with this when finished
+		// NOT DONE
+
+		console.log(`in deckCheck()`);
+		const start = new Date().getTime(); // start timer to measure function performance
+
+		if (deckIn) {
+			const checkedMain = await batchCheck(deckIn.main);
+			const checkedSideboard = await batchCheck(deckIn.sideboard);
+			console.log();
+
+			deckContext?.setName(deckIn.name);
 			deckContext?.setDeckMain(checkedMain);
 			deckContext?.setDeckSideboard(checkedSideboard);
 		}
@@ -298,13 +390,29 @@ export function DeckBuilder(): ReactElement {
 		// get a complete deck object from textbox strings:
 		let deckUnchecked: IDeck = createDeckFromStrings(rawDeckName, rawDeckMain, rawDeckSB);
 		console.log("deckUnchecked: ", deckUnchecked);
-		setDeck({
-			//
-			name: deckUnchecked.name,
-			main: deckUnchecked.main,
-			sideboard: deckUnchecked.sideboard,
-		});
+		console.log("deck state before setDeck: ", deck);
+		// setDeck({
+		// 	//
+		// 	name: deckUnchecked.name,
+		// 	main: deckUnchecked.main,
+		// 	sideboard: deckUnchecked.sideboard,
+		// });
+		setDeck(deckUnchecked);
+		console.log("deck state after setDeck: ", deck);
 		localStorage.setItem("deckUnchecked", JSON.stringify(deckUnchecked));
+		//
+
+		const start = new Date().getTime(); // start timer to measure function performance
+		console.log("starting timer in handleSaveDeck before deckCheck()...");
+		console.log("deck before deckCheck:", deck);
+		// deckCheck(deck!).then(() => console.log("deck after deckCheck:", deck));
+		deckCheck(deckUnchecked!) //
+			.then(() => console.log("deckUnchecked after deckCheck:", deckUnchecked))
+			.then(() => localStorage.setItem("deckUnchecked", JSON.stringify(deckUnchecked)))
+			.then(() => console.log("deck LS after deckCheck AFTER setItem:", JSON.parse(localStorage.getItem("deckUnchecked") || "NULL DECK OMG")));
+
+		let elapsed = new Date().getTime() - start; // end timer
+		console.log(`deckCheck() from handleSaveDeck finished. Time elapsed: ${elapsed} ms.`);
 	};
 
 	const handleLookup = async (cardName: string) => {
@@ -341,7 +449,15 @@ export function DeckBuilder(): ReactElement {
 			});
 
 			// 3. set raws
-			const [rawNameStr, rawMainStr, rawSideboardStr] = createStringsFromDeck(deckToLoad);
+
+			const stringsObj = createStringsFromDeckNew(deckToLoad);
+			const rawNameStr = stringsObj.nameStr;
+			const rawMainStr = stringsObj.mainStr;
+			const rawSideboardStr = stringsObj.sideboardStr;
+
+			//old one, testing if new works.
+			// const [rawNameStr = "", rawMainStr = "", rawSideboardStr = ""] = createStringsFromDeck(deckToLoad);
+
 			setRawDeckName(rawNameStr);
 			setRawDeckMain(rawMainStr);
 			setRawDeckSB(rawSideboardStr);

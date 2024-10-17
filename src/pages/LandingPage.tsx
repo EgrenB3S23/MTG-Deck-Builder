@@ -12,7 +12,9 @@ export function LandingPage(): ReactElement {
 	// const [loading, setLoading] = useState(false);
 	// const randomCard = useLoaderData();
 	const [randomCard, setRandomCard] = useState<ICard>(useLoaderData() as ICard);
-	console.log(randomCard);
+	console.log("randomCard", randomCard);
+	const randomCardVar = randomCard;
+	console.log("randomCardVar: ", randomCardVar);
 
 	// Fetches a new random card from API
 	async function handleButton(): Promise<void> {
