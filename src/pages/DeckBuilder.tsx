@@ -1,6 +1,6 @@
 import { FormEvent, ReactElement, useState, useContext } from "react";
 import { IDeck, IDecklistEntry, IDecklistEntryFull, IDeckStrings } from "../interfaces";
-import { arrowFetchCard, baseURL, dummyDeck, dummyMain, parseCardName } from "../utils";
+import { arrowFetchCard, baseURL, dummyDeck, dummyMain } from "../utils";
 import { DeckContext } from "../context";
 
 export function DeckBuilder(): ReactElement {
