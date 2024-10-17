@@ -203,7 +203,8 @@ export function capitalizeWords(str: string): string {
 }
 
 export const generateUniqueID = (prefix: string = "deck") => {
-	// usage: let id = generateUniqueID() 			// "deck-12345678"
-	// usage: let id = generateUniqueID("article")	// "article-12345678"
-	return `${prefix}-${Date.now()}`;
+	// usage: let id = generateUniqueID() 			// "1729156346783"
+	// usage: let id = generateUniqueID("deck")		// "deck-1729156346783"
+
+	return `${prefix}${prefix ? "-" : ""}${Date.now()}`;
 };

@@ -1,35 +1,63 @@
-import { FormEvent, ReactElement, useState, useContext } from "react";
+import { FormEvent, ReactElement, useState, useContext, useEffect } from "react";
 import { IDeck, IDecklistEntry } from "../interfaces";
-import { arrowFetchCard } from "../utils";
+import { arrowFetchCard, generateUniqueID } from "../utils";
 import { DeckContext } from "../context";
 import { SelectDeck } from "../components";
 
 export function DeckBuilder(): ReactElement {
 	// raw textbox data:
+	const [rawDeckID, setRawDeckID] = useState("");
 	const [rawDeckName, setRawDeckName] = useState("");
 	const [rawDeckMain, setRawDeckMain] = useState("");
 	const [rawDeckSB, setRawDeckSB] = useState("");
 
-	// deck state:
+	// deck state.
 	const [deck, setDeck] = useState<IDeck | null>(null);
 	const deckContext = useContext(DeckContext);
 	// load deck from localStorage on mount:
 	// useEffect(() => {
-	// 	const storedDeck = localStorage.getItem("deckUnchecked");
+	// 	const storedDeck = localStorage.getItem("storedSingleDeck");
 	// 	if (storedDeck) {
 	// 		setDeck(JSON.parse(storedDeck));
 	// 	}
 	// }, []);
 
+	// useEffect(); //generate deck id on load
+	useEffect(() => {
+		// 1. on load, check if deckContext has data. if it does, load it to decklist form.
+		// This code will run once on page load
+		console.log("Component has mounted!");
+
+		if (deckContext?.name) {
+			//essentially "if a deck has been stored in deckContext"
+
+			//set id
+			if (deckContext.ID) {
+				setRawDeckID(""); // dunno why this is needed but the ID sometimes gets malformed without it
+				setRawDeckID(deckContext.ID);
+			} else {
+				setRawDeckID("");
+				setRawDeckID(generateUniqueID("deck"));
+			}
+		} else {
+		}
+
+		// Optional: You can return a cleanup function here if needed
+		// return () => {
+		// 	console.log("Component is unmounting...");
+		// };
+	}, []); // Empty dependency array means it only runs once when the component mounts
+
 	// Save deck to state and localStorage
 	const saveDeck = (newDeck: IDeck) => {
+		// 241017 outdated
 		setDeck(newDeck);
 		localStorage.setItem("deckUnckecked", JSON.stringify(newDeck));
 	};
 
 	// load deck from localStorage return deck as IDeck object.
 	const loadDeck = () => {
-		const deckfromLocalStorage = localStorage.getItem("deckUnchecked");
+		const deckfromLocalStorage = localStorage.getItem("storedSingleDeck");
 
 		if (deckfromLocalStorage) {
 			const deckToLoad: IDeck = JSON.parse(deckfromLocalStorage);
@@ -294,18 +322,43 @@ export function DeckBuilder(): ReactElement {
 
 		e.preventDefault();
 
-		console.log("");
+		// some form data validation:
+		//TODO 241017 these messages could be displayed together with t
+		let errorMsg: string = "";
+		if (!rawDeckName.trim()) {
+			// errorMsg += "❗ You forgot to name your deck! How you would feel if your parents forgot to give you a name.\n";
+			errorMsg += "🔴 You must name your deck.\n";
+		}
+		if (!rawDeckMain.trim()) {
+			errorMsg += "🔴 Your maindeck cannot be empty.\n";
+		}
+		if (errorMsg) {
+			alert("⚠️Save aborted!⚠️\n\n" + errorMsg);
+			return;
+		}
+
+		const newDeckID = generateUniqueID("deck");
+
+		// console.log("");
 		console.log("### in handleSaveDeck...");
 		// get a complete deck object from textbox strings:
-		let deckUnchecked: IDeck = createDeckFromStrings(rawDeckName, rawDeckMain, rawDeckSB);
-		console.log("deckUnchecked: ", deckUnchecked);
+		let storedDeck: IDeck = createDeckFromStrings(rawDeckName, rawDeckMain, rawDeckSB); // converts the textbox data into an IDeck object
+		storedDeck.ID = rawDeckID;
+		if (!storedDeck.ID) {
+			// if deck doesn't already have an id, give it one.
+			storedDeck.ID = newDeckID;
+		}
+		console.log("storedDeck: ", storedDeck);
 		setDeck({
 			//
-			name: deckUnchecked.name,
-			main: deckUnchecked.main,
-			sideboard: deckUnchecked.sideboard,
+			ID: newDeckID,
+			name: storedDeck.name,
+			main: storedDeck.main,
+			sideboard: storedDeck.sideboard,
 		});
-		localStorage.setItem("deckUnchecked", JSON.stringify(deckUnchecked));
+
+		//todo: replace with ability to save multiple decks at once.
+		localStorage.setItem("storedSingleDeck", JSON.stringify(storedDeck));
 	};
 
 	const handleLookup = async (cardName: string) => {
@@ -331,24 +384,61 @@ export function DeckBuilder(): ReactElement {
 		// 1. load IDeck object from localStorage
 		const deckToLoad = loadDeck(); // IDeck object (or null if error)
 		console.log("deckToLoad: ", deckToLoad);
+		let rawIdStr: string = "";
 
 		// 2. save the IDeckobject with setDeck()
-		if (deckToLoad !== null) {
-			setDeck({
-				// save deck object to state
-				name: deckToLoad.name,
-				main: deckToLoad.main,
-				sideboard: deckToLoad.sideboard,
-			});
+		if (deckToLoad) {
+			if (deckToLoad.ID) {
+				// if loaded deck already has an ID, use that.
+				const loadedID = deckToLoad.ID;
+				console.log("loadedID: ", loadedID);
+				rawIdStr = loadedID;
+			} else {
+				// ..otherwise generate a new ID.
+				rawIdStr = generateUniqueID("deck");
+				// since the deck from localStorage didn't have an ID, give it the one we just generated
+			}
+			// if (deckToLoad.ID) {
+			// 	= deck
+			// }
+			// setDeck({
+			// 	// save deck object to state
+			// 	ID: deckToLoad.ID,
+			// 	name: deckToLoad.name,
+			// 	main: deckToLoad.main,
+			// 	sideboard: deckToLoad.sideboard,
+			// });
+
+			// if (deck) {
+			// 	if (!deck.ID) {
+			// 		const newDeckID = generateUniqueID("deck");
+			// 		setDeck({
+			// 			ID: newDeckID,
+			// 			name: deckToLoad.name,
+			// 			main: deckToLoad.main,
+			// 			sideboard: deckToLoad.sideboard,
+			// 		});
+			// 	} else {
+			// 		setDeck({
+			// 			ID: deckToLoad.ID,
+			// 			name: deckToLoad.name,
+			// 			main: deckToLoad.main,
+			// 			sideboard: deckToLoad.sideboard,
+			// 		});
+			// 	}
+			// }
 
 			// 3. set raws
 			const [rawNameStr, rawMainStr, rawSideboardStr] = createStringsFromDeck(deckToLoad);
+			setRawDeckID(rawIdStr); // todo: ensure it works
 			setRawDeckName(rawNameStr);
 			setRawDeckMain(rawMainStr);
 			setRawDeckSB(rawSideboardStr);
-			console.log("rawNameStr: ", rawNameStr);
-			console.log("rawMainStr: ", rawMainStr);
-			console.log("rawSideboardStr: ", rawSideboardStr);
+
+			console.log("rawIdStr:\n", rawIdStr);
+			console.log("rawNameStr:\n", rawNameStr);
+			console.log("rawMainStr:\n", rawMainStr);
+			console.log("rawSideboardStr:\n", rawSideboardStr);
 		}
 	};
 
@@ -368,11 +458,18 @@ export function DeckBuilder(): ReactElement {
 				<button onClick={() => handleLookup("moxpal")}>"moxpal"</button>
 				<form id="decklist-form" onSubmit={handleSaveDeck}>
 					<input //
+						name="deckID"
+						id="deckID"
+						placeholder="Deck ID"
+						value={rawDeckID}
+						onChange={(e) => setRawDeckID(e.target.value)}
+					/>{" "}
+					<input //
 						name="deckName"
 						id="deckName"
 						placeholder="Deck name"
 						value={rawDeckName}
-						onChange={(e) => setRawDeckName(e.target.value)}
+						onChange={(e) => setRawDeckName(e.target.value.trim())}
 					/>
 					<textarea //
 						name="deckMain"
@@ -380,7 +477,7 @@ export function DeckBuilder(): ReactElement {
 						placeholder="Main deck"
 						rows={20}
 						value={rawDeckMain}
-						onChange={(e) => setRawDeckMain(e.target.value)}
+						onChange={(e) => setRawDeckMain(e.target.value.trim())}
 					/>
 					<textarea //
 						name="deckSB"
@@ -388,7 +485,7 @@ export function DeckBuilder(): ReactElement {
 						placeholder="Sideboard"
 						rows={8}
 						value={rawDeckSB}
-						onChange={(e) => setRawDeckSB(e.target.value)}
+						onChange={(e) => setRawDeckSB(e.target.value.trim())}
 					/>
 					<button type="submit">Save deck</button>
 				</form>

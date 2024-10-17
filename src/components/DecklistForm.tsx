@@ -14,7 +14,7 @@ export const DecklistForm = () => {
 			sideboard: rawDeckSB.split("\n").map((card) => ({ name: card.trim(), count: card[0] })),
 		};
 
-		localStorage.setItem("deckUnchecked", JSON.stringify(deckData));
+		localStorage.setItem("storedSingleDeck", JSON.stringify(deckData));
 		console.log("Deck saved:", deckData);
 	};
 

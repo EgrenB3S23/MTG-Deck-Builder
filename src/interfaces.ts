@@ -42,6 +42,7 @@ export interface ICard {
 	[key: string]: unknown; //  catch-all
 }
 
+/*	not currently in use, but might use in the future
 export interface IScryfallCard {
 	//unlike ICard, IScryfallCard is a *complete* interface for "card" objects returned from Scryfall's API.
 	object: string;
@@ -123,6 +124,7 @@ export interface IScryfallCard {
 	related_uris: { [key: string]: string }; // Object with string keys and string values
 	purchase_uris: { [key: string]: string }; // Object with string keys and string values
 }
+*/
 
 export interface IDecklistEntry {
 	//  used for single cards in a decklist. each line "4 Mox Opal" turns into {"Mox Opal", 4}
@@ -135,11 +137,20 @@ export interface IDecklistEntry {
 export interface IDeck {
 	//represents an mtg decklist.
 	// todo 241016: checkDeckLegalityLocally() function to loop through all cards in deck for their format legalities, then return resulting deck legalities. (if all cards are legal in standard, deck is legal in standard, etc)
-	key?: number;
+	ID?: string;
 	name: string;
 	main: IDecklistEntry[];
 	sideboard: IDecklistEntry[];
 }
+
+/*
+export interface IDecks {
+	// list of decks
+	decks: IDeck[];
+}
+*/
+
+/*
 export interface IDecklistEntryFull {
 	// like IDecklistEntry, but with card data and 'exists'
 	// todo 241016: merge IDecklistEntry & IDecklistEntryFull
@@ -148,7 +159,9 @@ export interface IDecklistEntryFull {
 	is_real?: boolean;
 	card_info?: ICard;
 }
+*/
 
+/*
 export interface IDeckFull {
 	name: string;
 	main: IDecklistEntryFull[];
@@ -166,8 +179,11 @@ export interface IDeckFull {
 	// 	[key: string]: string; // catch-all for any additional formats. (any other field under 'legalities' will be typed as a string)
 	// };
 }
+*/
 
+/*
 export interface ICardNameReport {
 	name: string;
 	is_real: boolean;
 }
+*/

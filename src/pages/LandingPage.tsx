@@ -12,7 +12,7 @@ export function LandingPage(): ReactElement {
 	// const [loading, setLoading] = useState(false);
 	// const randomCard = useLoaderData();
 	const [randomCard, setRandomCard] = useState<ICard>(useLoaderData() as ICard);
-	console.log(randomCard);
+	console.log(randomCard.name, JSON.stringify(randomCard));
 
 	// Fetches a new random card from API
 	async function handleButton(): Promise<void> {
@@ -23,6 +23,7 @@ export function LandingPage(): ReactElement {
 			// Send fetch request
 			const resp = await fetch(`${baseURL}/cards/random`);
 			setRandomCard(await resp.json());
+			console.log(randomCard.name, JSON.stringify(randomCard));
 		} catch (e) {
 			console.error(e);
 			// setErrorMessage("Could not retrieve another drink");
@@ -40,7 +41,7 @@ export function LandingPage(): ReactElement {
 			{/* <CardImg imgUrl={randomCard.image_uris.png} alt={randomCard.name} caption={randomCard.name}></CardImg> */}
 			<CardImg card={randomCard}></CardImg>
 			{/* {errorMessage ? <h1 className="errorMessage">{errorMessage}</h1> : null}{" "} */}
-			<button onClick={handleButton}>new card</button>
+			<button onClick={handleButton}>New card</button>
 		</section>
 	);
 }

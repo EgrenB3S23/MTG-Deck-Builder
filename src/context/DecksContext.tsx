@@ -6,6 +6,7 @@ import { IDeck, IDecklistEntry } from "../interfaces";
 interface DecksContextType {
 	decks: IDeck[];
 	setDecks: (value: IDeck[]) => void;
+	//updateDeck: (value: IDeck[]) // todo: check provided deck's ID, if ID matches an already stored deck, replace that deck with provided deck. if no match was found, add deck as new (or do nothing?)
 }
 
 export const DecksContext = createContext<DecksContextType | undefined>(undefined);
