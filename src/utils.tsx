@@ -1,4 +1,4 @@
-import { ICard } from "./interfaces";
+import { ICard, IDeck, IDecklistEntry } from "./interfaces";
 
 export const baseURL = "https://api.scryfall.com";
 
@@ -8,7 +8,15 @@ export const baseURL = "https://api.scryfall.com";
 
 // todo: remove this (testing purposes)
 
+export let emptyDeck = {
+	ID: "deck-empty",
+	name: "empty deck",
+	main: [],
+	sideboard: [],
+};
+
 export let dummyDeck = {
+	ID: "deck-dummyDeck",
 	name: "flowers",
 	main: [
 		{
@@ -208,3 +216,10 @@ export const generateUniqueID = (prefix: string = "deck") => {
 
 	return `${prefix}${prefix ? "-" : ""}${Date.now()}`;
 };
+
+/* not in use
+export function toDeck(inputID: string, inputName: string, inputMain: IDecklistEntry[], inputSideboard: IDecklistEntry[]): IDeck {
+	// repackages a set of IDeck properties into an IDeck object.
+	return { ID: inputID, name: inputName, main: inputMain, sideboard: inputSideboard };
+}
+*/

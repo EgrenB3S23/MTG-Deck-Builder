@@ -42,7 +42,7 @@ export interface ICard {
 	[key: string]: unknown; //  catch-all
 }
 
-/*	not currently in use, but might use in the future
+/*	not currently in use, but might use in the futureX
 export interface IScryfallCard {
 	//unlike ICard, IScryfallCard is a *complete* interface for "card" objects returned from Scryfall's API.
 	object: string;

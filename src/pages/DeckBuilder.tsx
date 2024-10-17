@@ -1,6 +1,6 @@
 import { FormEvent, ReactElement, useState, useContext, useEffect } from "react";
 import { IDeck, IDecklistEntry } from "../interfaces";
-import { arrowFetchCard, generateUniqueID } from "../utils";
+import { arrowFetchCard, dummyDeck, emptyDeck, generateUniqueID } from "../utils";
 import { DeckContext } from "../context";
 import { SelectDeck } from "../components";
 
@@ -28,6 +28,13 @@ export function DeckBuilder(): ReactElement {
 		// This code will run once on page load
 		console.log("Component has mounted!");
 
+		if (!localStorage.getItem("storedDecks")) {
+			localStorage.setItem("storedDecks", JSON.stringify([]));
+		}
+		if (deck === null) {
+			setDeck(emptyDeck);
+		}
+
 		if (deckContext?.name) {
 			//essentially "if a deck has been stored in deckContext"
 
@@ -52,7 +59,7 @@ export function DeckBuilder(): ReactElement {
 	const saveDeck = (newDeck: IDeck) => {
 		// 241017 outdated
 		setDeck(newDeck);
-		localStorage.setItem("deckUnckecked", JSON.stringify(newDeck));
+		localStorage.setItem("storedSingleDeck", JSON.stringify(newDeck));
 	};
 
 	// load deck from localStorage return deck as IDeck object.
@@ -233,8 +240,7 @@ export function DeckBuilder(): ReactElement {
 	}
  */
 
-	async function batchCheck(input: IDecklistEntry[]) {
-		// todo 241015: replace batchCheckOld with this.
+	async function batchCheck(cards: IDecklistEntry[]) {
 		// 1. takes a list of decklist entries,
 		// 2. fetches card data for each card in list
 		// 3. responses will be a mix of <ICard | null>
@@ -243,13 +249,18 @@ export function DeckBuilder(): ReactElement {
 		// 4.2. add "is_real" flag
 		// 4.3. replace name with corrected name ("moxopal"-> "Mox Opal")
 
-		// const [...cardNames] = input.name;
+		// const [...cardNames] = cards.name;
 		// const data = await Promise.all(cardNames.map(arrowFetchCard));
+
+		// example usage
+		// batchCheck(cards).then((results) => {
+		//	console.log(results);
+		// });
 
 		// const start = new Date().getTime(); // start timer to measure function performance
 
-		const retVal = input;
-		const data = await Promise.all(input.map((entry) => arrowFetchCard(entry.name))); // "for each card in list, fetch card info."
+		const retVal: IDecklistEntry[] = cards;
+		const data = await Promise.all(cards.map((entry) => arrowFetchCard(entry.name))); // "for each card in list, fetch card info."
 
 		for (let i = 0; i < retVal.length; i++) {
 			// if(data[i] !== null && retVal[i] !== null){
@@ -263,33 +274,14 @@ export function DeckBuilder(): ReactElement {
 				} else retVal[i].is_real = false;
 			} else retVal[i].is_real = false;
 		}
-		return retVal;
+		return retVal; // : IDecklistEntry[]
 	}
-
-	/* commented out 241016 
-	async function deckCheckOld() {
-		//todo241016: replace with dechCheckNew
-
-		console.log(`in deckCheckOld()`);
-		const start = new Date().getTime(); // start timer to measure function performance
-
-		if (deck) {
-			// todo: combine
-			const checkedMain = await batchCheckOld(deck.main);
-			const checkedSideboard = await batchCheckOld(deck.sideboard);
-			// spara till context
-			deckContext?.setDeckMain(checkedMain);
-			deckContext?.setDeckSideboard(checkedSideboard);
-		}
-
-		let elapsed = new Date().getTime() - start; // end timer
-		console.log(`deckCheckOld() finished. Time elapsed: ${elapsed} ms.`);
-	}
- */
 
 	async function deckCheck(deck: IDeck) {
 		// todo 241016: replace deckCheckOld with this when finished
 		// NOT DONE
+
+		//deckCheck() calls batchCheck(). <- old method
 
 		console.log(`in deckCheck()`);
 		const start = new Date().getTime(); // start timer to measure function performance
@@ -306,7 +298,31 @@ export function DeckBuilder(): ReactElement {
 		console.log(`deckCheck() finished. Time elapsed: ${elapsed} ms.`);
 	}
 
+	// example usage
+	// batchCheck(cards).then((results) => {
+	//	console.log(results);
+	// });
+
+	async function batchCheckDeck(deck: IDeck): Promise<IDeck> {
+		//241017
+		//runs batchCheck() on both provided deck's maindeck and sideboard, adding is_real flag and card_info to each card
+
+		console.log("in batchCheckDeck(): ", deck);
+
+		let checkedMain = await batchCheck(deck.main);
+		let checkedSideboard = await batchCheck(deck.sideboard);
+
+		if (checkedMain) {
+		}
+
+		deck.main = checkedMain || deck.main;
+		deck.sideboard = checkedSideboard || deck.sideboard;
+
+		return deck;
+	}
+
 	const handleSaveDeck = (e: FormEvent<HTMLFormElement>) => {
+		e.preventDefault();
 		// todo 241014
 
 		// 1. convert textbox data into deck (IDeck) object.
@@ -320,13 +336,11 @@ export function DeckBuilder(): ReactElement {
 		// >>>			batchCheck(sideboard: IDecklistEntry[])	return format: IDecklistEntry[] w/ card_info
 		// >>>>				arrowFetchCard(card name: string)		done. return format: <ICard | null>
 
-		e.preventDefault();
+		console.log("### in handleSaveDeck...");
 
 		// some form data validation:
-		//TODO 241017 these messages could be displayed together with t
 		let errorMsg: string = "";
 		if (!rawDeckName.trim()) {
-			// errorMsg += "❗ You forgot to name your deck! How you would feel if your parents forgot to give you a name.\n";
 			errorMsg += "🔴 You must name your deck.\n";
 		}
 		if (!rawDeckMain.trim()) {
@@ -337,28 +351,69 @@ export function DeckBuilder(): ReactElement {
 			return;
 		}
 
-		const newDeckID = generateUniqueID("deck");
-
-		// console.log("");
-		console.log("### in handleSaveDeck...");
 		// get a complete deck object from textbox strings:
-		let storedDeck: IDeck = createDeckFromStrings(rawDeckName, rawDeckMain, rawDeckSB); // converts the textbox data into an IDeck object
-		storedDeck.ID = rawDeckID;
-		if (!storedDeck.ID) {
-			// if deck doesn't already have an id, give it one.
-			storedDeck.ID = newDeckID;
+		let deckFromForm: IDeck = createDeckFromStrings(rawDeckName, rawDeckMain, rawDeckSB); // converts the textbox data into an IDeck object
+		deckFromForm.ID = rawDeckID;
+
+		// if rawDeckID was empty or otherwise invalid, generate a new deckID.
+		if (!deckFromForm.ID) {
+			deckFromForm.ID = generateUniqueID("deck");
 		}
-		console.log("storedDeck: ", storedDeck);
-		setDeck({
-			//
-			ID: newDeckID,
-			name: storedDeck.name,
-			main: storedDeck.main,
-			sideboard: storedDeck.sideboard,
-		});
+
+		console.log("deckFromForm before: ", deckFromForm);
+		console.log("before setDeck(): ", deckFromForm);
+		console.log("ID: ", deckFromForm.ID);
+		console.log("name: ", deckFromForm.name);
+		console.log("main: ", deckFromForm.main);
+		console.log("sideboard: ", deckFromForm.sideboard);
+
+		// let deck;
+		//
+		setDeck(deckFromForm);
+		// saveDeck(deckFromForm);
+
+		console.log("deck after setDeck(): ", deck);
+		console.log("deckFromForm after setDeck(): ", deckFromForm);
+
+		//###################################
+		//#				241017				#
+		//#				TODO:				#
+		//#		run deckCheck on deck here	#
+		//#									#
+		//###################################
+
+		// verify card names and add card_info to each correctly spelled card
+		// let checkedDeck = deckCheck(deckFromForm);
+
+		// let checkedDeckMain = deck.main ? batchCheck(deck.main) : [];
+		// let checkedDeckMain: IDecklistEntry[] = [];
+		// let checkedDeckSideboard: IDecklistEntry[] = [];
+		// if (deck!.main) {
+		// 	checkedDeckMain = batchCheck();
+		// }
+		// checkedDeckSideboard = batchCheck(deck.sideboard);
+		// let checkedDeck = batchCheckDeck(deck!) || null;
+
+		/*
+		let checkedDeck: any = null;
+		batchCheckDeck(deck!)
+			.then((result) => {
+				checkedDeck = result || null;
+			})
+			.catch((error) => {
+				console.error("Error checking deck:", error);
+			});
+		*/
+
+		//save deck before checking (in case check messes up) // TODO: fix this
+		localStorage.setItem("storedSingleDeck", JSON.stringify(deckFromForm));
+
+		// if (deck) {
+		// 	deckCheck(deck);
+		// }
 
 		//todo: replace with ability to save multiple decks at once.
-		localStorage.setItem("storedSingleDeck", JSON.stringify(storedDeck));
+		// localStorage.setItem("storedSingleDeck", JSON.stringify(deckFromForm));
 	};
 
 	const handleLookup = async (cardName: string) => {
@@ -398,6 +453,7 @@ export function DeckBuilder(): ReactElement {
 				rawIdStr = generateUniqueID("deck");
 				// since the deck from localStorage didn't have an ID, give it the one we just generated
 			}
+			deckToLoad.ID = rawIdStr;
 			// if (deckToLoad.ID) {
 			// 	= deck
 			// }
@@ -408,6 +464,14 @@ export function DeckBuilder(): ReactElement {
 			// 	main: deckToLoad.main,
 			// 	sideboard: deckToLoad.sideboard,
 			// });
+
+			console.log("deckToLoad before setDeck(deckToLoad):", deckToLoad);
+			console.log("deck state before setDeck(deckToLoad):", deckToLoad);
+
+			setDeck(deckToLoad);
+
+			console.log("deckToLoad after setDeck(deckToLoad):", deckToLoad);
+			console.log("deck state after setDeck(deckToLoad):", deckToLoad);
 
 			// if (deck) {
 			// 	if (!deck.ID) {
@@ -442,6 +506,62 @@ export function DeckBuilder(): ReactElement {
 		}
 	};
 
+	function saveDeckLS(deckToStore: IDeck | null) {
+		console.log("in saveDeckLS()...");
+		if (deckToStore == null) {
+			console.log("failed to save deck. deck is null. ");
+			return;
+		}
+		console.log("deckToStore: ", deckToStore);
+		// 1. load storedDecks from LS
+		// 2. add deckToStore to storedDecks
+		// 3.
+
+		// localStorage.setItem("storedDecks", JSON.stringify([dummyDeck]));
+		// deckToStore = dummyDeck;
+
+		let fromLS: string = localStorage.getItem("storedDecks") || "[]";
+		// console.log("fromLS: ", fromLS);
+		let storedDecks: IDeck[] = JSON.parse(fromLS);
+
+		console.log("storedDecks: ", storedDecks);
+		storedDecks.push(deckToStore);
+		console.log("storedDecks: ", storedDecks);
+
+		localStorage.setItem("storedDecks", JSON.stringify(storedDecks));
+	}
+
+	function TESTSETDECK() {
+		// todo: temporary test function
+		console.log("in TESTSETDECK");
+
+		let DECKID = rawDeckID;
+		let DECKNAME = rawDeckName;
+		let DECKMAIN = rawDeckMain;
+		let DECKSB = rawDeckSB;
+
+		let DECKTOUSE = createDeckFromStrings(DECKNAME, DECKMAIN, DECKSB);
+
+		DECKTOUSE.ID = DECKID;
+
+		console.log("before setDeck. DECKTOUSE: ", DECKTOUSE);
+		setDeck(
+			DECKTOUSE
+
+			// {
+			// 	ID: DECKID,
+			// 	name: DECKNAME,
+			// 	main: DECKMAIN,
+
+			// }
+		);
+		console.log("after setDeck. deck: ", deck);
+		alert();
+		saveDeck(DECKTOUSE);
+		console.log("after saveDeck. DECKTOUSE: ", DECKTOUSE);
+		console.log("after saveDeck. deck: ", deck);
+	}
+
 	return (
 		<>
 			<section id="deckBuilder">
@@ -469,7 +589,7 @@ export function DeckBuilder(): ReactElement {
 						id="deckName"
 						placeholder="Deck name"
 						value={rawDeckName}
-						onChange={(e) => setRawDeckName(e.target.value.trim())}
+						onChange={(e) => setRawDeckName(e.target.value)}
 					/>
 					<textarea //
 						name="deckMain"
@@ -477,7 +597,7 @@ export function DeckBuilder(): ReactElement {
 						placeholder="Main deck"
 						rows={20}
 						value={rawDeckMain}
-						onChange={(e) => setRawDeckMain(e.target.value.trim())}
+						onChange={(e) => setRawDeckMain(e.target.value)}
 					/>
 					<textarea //
 						name="deckSB"
@@ -485,7 +605,7 @@ export function DeckBuilder(): ReactElement {
 						placeholder="Sideboard"
 						rows={8}
 						value={rawDeckSB}
-						onChange={(e) => setRawDeckSB(e.target.value.trim())}
+						onChange={(e) => setRawDeckSB(e.target.value)}
 					/>
 					<button type="submit">Save deck</button>
 				</form>
@@ -493,6 +613,8 @@ export function DeckBuilder(): ReactElement {
 				<button onClick={handleLoadDeck}>Load deck!</button>
 				<button onClick={() => batchCheck(deck!.main)}>{`test batchCheck()`}</button> {/* sloppy NNA, but its for testing */}
 				<button onClick={() => deckCheck(deck!)}>{`test deckCheck()`}</button> {/* sloppy NNA, but its for testing */}
+				<button onClick={TESTSETDECK}>{`test TESTSETDECK()`}</button> {/* sloppy NNA, but its for testing */}
+				<button onClick={() => saveDeckLS(deck)}>{`test saveDeckLS()`}</button> {/* sloppy NNA, but its for testing */}
 			</section>
 			<SelectDeck />
 		</>
