@@ -221,7 +221,7 @@ export function DeckBuilder(): ReactElement {
 		};
 	}
 
-	/* 
+	/* commented out 241014 / 15
 	async function batchFetch(cards: IDecklistEntry[]) {
 		// todo 241015
 		// fetches card info for multiple cards with a single API request.
@@ -247,6 +247,7 @@ export function DeckBuilder(): ReactElement {
 	}
 	 */
 
+	/*	commented out 241016
 	async function batchCheckOld(input: IDecklistEntry[]) {
 		// deprecated
 		const cards: IDecklistEntryFull[] = [];
@@ -270,6 +271,7 @@ export function DeckBuilder(): ReactElement {
 		console.log("Parsed cards: ", cards);
 		return cards;
 	}
+ */
 
 	async function batchCheck(input: IDecklistEntry[]) {
 		// todo 241015: replace batchCheckOld with this.
@@ -304,6 +306,7 @@ export function DeckBuilder(): ReactElement {
 		return retVal;
 	}
 
+	/* commented out 241016 
 	async function deckCheckOld() {
 		//todo241016: replace with dechCheckNew
 
@@ -322,6 +325,7 @@ export function DeckBuilder(): ReactElement {
 		let elapsed = new Date().getTime() - start; // end timer
 		console.log(`deckCheckOld() finished. Time elapsed: ${elapsed} ms.`);
 	}
+ */
 
 	async function deckCheckOld2(deck: IDeck) {
 		// replaced 241018
@@ -411,10 +415,16 @@ export function DeckBuilder(): ReactElement {
 		console.log(`deckCheck() from handleSaveDeck finished. Time elapsed: ${elapsed} ms.`);
 	};
 
-	const handleLookup = async (cname: string) => {
-		const resp = await parseCardName(cname);
-		console.log("cname length", cname.length);
-		console.log("resp length", resp.length);
+	const handleLookup = async (cardName: string) => {
+		//old:  const resp = await parseCardName(cname);
+		const resp = await arrowFetchCard(cardName);
+
+		console.log("cardName", cardName.length);
+		if (resp) {
+			if (resp.object === "card") {
+				console.log("resp length", resp.length);
+			}
+		}
 	};
 
 	const handleLoadDeck = () => {
@@ -499,7 +509,6 @@ export function DeckBuilder(): ReactElement {
 				</form>
 				{/* <DecklistForm /> */}
 				<button onClick={handleLoadDeck}>Load deck!</button>
-				<button onClick={deckCheckOld}>parse cards</button>
 				<button onClick={() => batchCheck(deck!.main)}>{`test batchCheck()`}</button> {/* sloppy NNA, but its for testing */}
 				<button onClick={() => deckCheck(deck!)}>{`test deckCheck()`}</button> {/* sloppy NNA, but its for testing */}
 			</section>
