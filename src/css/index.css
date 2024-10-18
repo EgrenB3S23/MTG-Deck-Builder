@@ -13,7 +13,7 @@
 	font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
 
 	color-scheme: light dark;
-	color: rgba(255, 255, 255, 0.87);
+	/* color: rgba(255, 255, 255, 0.87); */
 	background-color: #242424;
 
 	font-synthesis: none;
@@ -31,10 +31,11 @@
 
 	a {
 		font-weight: 500;
-		color: #646cff;
+		/* color: #646cff; */
 		text-decoration: inherit;
 		&:hover {
-			color: #535bf2;
+			/* color: #535bf2; */
+			text-decoration: underline;
 		}
 	}
 
@@ -60,14 +61,4 @@
 }
 
 @media (prefers-color-scheme: light) {
-	:root {
-		color: #213547;
-		background-color: #ffffff;
-	}
-	a:hover {
-		color: #747bff;
-	}
-	button {
-		background-color: #f9f9f9;
-	}
 }

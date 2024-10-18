@@ -1,0 +1,42 @@
+.decklist-display {
+	.deck-name {
+		font-family: "Roboto Slab", serif;
+		font-optical-sizing: auto;
+		font-weight: 500;
+		font-style: normal;
+		background-color: #111;
+		text-align: center;
+		padding: 3px 5px;
+		border-top-left-radius: 20px;
+		border-top-right-radius: 20px;
+	}
+	.card-lists {
+		display: flex;
+		/* background-color: rgba(0, 0, 0, 0); */
+		background-color: #111;
+		.card-list-title {
+			padding: 2px 6px;
+		}
+		/* gap: 4px; */
+		ul {
+			background-color: #111;
+			color: white;
+			font-weight: 700;
+			li {
+				/* background-color is set inline with getCSSColorFromMTG() from utils.tsx*/
+
+				padding: 1px 3px;
+				color: black;
+				border-bottom: 1px solid #666;
+				a {
+					color: black;
+				}
+
+				&::marker {
+					/* display: none; */
+					color: rgba(0, 0, 0, 0);
+				}
+			}
+		}
+	}
+}

@@ -1,9 +1,9 @@
 import { createBrowserRouter } from "react-router-dom";
-import { DeckBuilder, LandingPage } from "./pages";
+import { DeckBuilder, LandingPage, ViewDeck } from "./pages";
 import { App } from "./components";
 // import { cocktailInfoLoader, randomCocktailLoader, ingredientLoader } from "./loaders";
 
-import { randomCardLoader } from "./loaders";
+import { randomCardLoader, viewDeckLoader } from "./loaders";
 
 export const router = createBrowserRouter([
 	{
@@ -18,6 +18,12 @@ export const router = createBrowserRouter([
 			{
 				path: "/deckbuilder",
 				element: <DeckBuilder />,
+			},
+			{
+				path: "/viewdeck",
+				// path: "/viewdeck/:id", // for
+				element: <ViewDeck />,
+				loader: viewDeckLoader,
 			},
 			// {
 			// 	path: "/search",
