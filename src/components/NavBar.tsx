@@ -20,6 +20,11 @@ export function NavBar(): ReactElement {
 						<h2>Deck Builder</h2>
 					</NavLink>
 				</li>
+				<li>
+					<NavLink to="/viewdeck">
+						<h2>View Deck</h2>
+					</NavLink>
+				</li>
 			</ul>
 		</nav>
 	);

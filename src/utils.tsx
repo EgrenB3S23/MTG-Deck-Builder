@@ -1,4 +1,4 @@
-import { ICard } from "./interfaces";
+import { ICard, IDeck } from "./interfaces";
 
 export const baseURL = "https://api.scryfall.com";
 
@@ -9,41 +9,64 @@ export const baseURL = "https://api.scryfall.com";
 // todo: remove this (testing purposes)
 
 export let dummyDeck = {
-	name: "flowers",
+	name: "colortest",
 	main: [
 		{
-			name: "black lotus",
-			count: 4,
+			name: "Black Lotus",
+			count: 1,
 		},
 		{
-			name: "lotus petal",
-			count: 4,
+			name: "Lotus Petal",
+			count: 1,
 		},
 		{
-			name: "lotus bloom",
-			count: 4,
+			name: "Lotus Bloom",
+			count: 1,
 		},
 		{
-			name: "3",
-			count: 3,
+			name: "Mox Opal",
+			count: 1,
 		},
 		{
-			name: "a",
-			count: 2,
+			name: "Chrome Mox",
+			count: 1,
+		},
+		{
+			name: "Savannah Lions",
+			count: 1,
+		},
+		{
+			name: "Snapcaster Mage",
+			count: 1,
+		},
+		{
+			name: "Mogg Fanatic",
+			count: 1,
+		},
+		{
+			name: "Dark Confidant",
+			count: 1,
+		},
+		{
+			name: "Tarmogoyf",
+			count: 1,
+		},
+		{
+			name: "Progenitus",
+			count: 1,
+		},
+		{
+			name: "City of Brass",
+			count: 1,
 		},
 	],
 	sideboard: [
 		{
-			name: "mox lotus",
-			count: 4,
-		},
-		{
-			name: "chrome mox",
-			count: 4,
+			name: "Island",
+			count: 1,
 		},
 	],
 };
-
 export let dummyMain = [
 	{
 		name: "black lotus",
@@ -200,4 +223,43 @@ export function capitalizeWords(str: string): string {
 	const stringCapitalized: string = wordsCapitalized.join(" ");
 
 	return stringCapitalized;
+}
+
+export const emptyDeck = (): IDeck => {
+	return {
+		// id: "",
+		name: "",
+		main: [],
+		sideboard: [],
+	};
+};
+
+export function getCSSColorFromMTG(colors: string[] | undefined): string {
+	// takes a card's colors[] property and returns a CSS color as a string.
+	if (!colors) {
+		return "white"; // Default to white if colors are not provided
+	}
+
+	switch (colors.length) {
+		case 0: //colorless
+			return "#BBB";
+		case 1: //monocolored, follow-up switch to determine which below
+			switch (colors[0]) {
+				case "W":
+					return "rgb(245, 245, 220)";
+				case "U":
+					return "#22a";
+					return "darkblue";
+				case "B":
+					return "rgb(60, 60, 60)";
+				case "R":
+					return "darkred";
+				case "G":
+					return "darkgreen";
+				default:
+					return "lightgrey"; //
+			}
+		default: // multicolored
+			return "gold";
+	}
 }
