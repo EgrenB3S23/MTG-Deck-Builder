@@ -1,8 +1,8 @@
 import { ReactElement, useState } from "react";
-import { ICard, IDecklistEntry, IScryfallCard } from "../interfaces";
+import { ICard, IDeck, IDecklistEntry, IScryfallCard } from "../interfaces";
 import { Link } from "react-router-dom";
 import "../css/DecklistDisplay.css";
-import { getCSSColorFromMTG } from "../utils";
+import { getCSSColorFromMTG, sortDeck } from "../utils";
 
 interface DecklistDisplayProps {
 	deck: {
@@ -17,6 +17,8 @@ export function DecklistDisplay({ deck }: DecklistDisplayProps): ReactElement {
 	const [hoveredCardInfo, setHoveredCardInfo] = useState<ICard | null>(null);
 	const [cursorPos, setCursorPos] = useState({ x: 0, y: 0 });
 
+	const [decklist, setDecklist] = useState<IDeck>(deck);
+
 	function openPopup(url: string, target: string = "_blank", features: string = "width=400,height=300") {
 		const popupWindow = window.open(url, target, features);
 		popupWindow?.focus();
@@ -29,10 +31,17 @@ export function DecklistDisplay({ deck }: DecklistDisplayProps): ReactElement {
 			y: event.pageY,
 		});
 	};
+
+	const handleSortButton = () => {
+		let sortedDeck = deck;
+		deck = sortDeck(sortedDeck);
+	};
+
 	return (
 		<>
 			<br />
 			<br />
+			<button onClick={handleSortButton}>Sort deck</button>
 			<br />
 			<section className="decklist-display" onMouseMove={handleCursorMove}>
 				<h2 className="deck-name">{deck.name}</h2>
