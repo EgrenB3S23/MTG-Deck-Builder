@@ -234,6 +234,43 @@ export const emptyDeck = (): IDeck => {
 	};
 };
 
+export function sortDeck(deckToSort: IDeck): IDeck {
+	// sorts deck by card type,
+	// todo: allow sorting by different parameters.
+	const sortOrder = ["creature", "enchantment", "sorcery", "instant", "artifact", "planeswalker", "battle", "land"];
+
+	// Helper function to get the sorting index based on card type
+	const getSortIndex = (typeLine: string): number => {
+		// Find the first word (main card type) in type_line, convert to lowercase for case-insensitive comparison
+		const mainType = typeLine.split(" ")[0].toLowerCase();
+
+		// Get the sort order index or a high value (sort alphabetically after known types)
+		const index = sortOrder.indexOf(mainType);
+		return index === -1 ? sortOrder.length + mainType.charCodeAt(0) : index;
+	};
+
+	// Sort the main deck
+	const sortedMain = [...deckToSort.main].sort((a, b) => {
+		return getSortIndex(a.card_info?.type_line || "") - getSortIndex(b.card_info?.type_line || "");
+	});
+
+	// Sort the sideboard in the same way
+	const sortedSideboard = [...deckToSort.sideboard].sort((a, b) => {
+		return getSortIndex(a.card_info?.type_line || "") - getSortIndex(b.card_info?.type_line || "");
+	});
+
+	// Return the sorted deck
+	return {
+		...deckToSort,
+		main: sortedMain,
+		sideboard: sortedSideboard,
+	};
+}
+
+// for (let i = 0; i < deckSorted.main.length; i++) {
+// 	let entry = deckSorted.main[i];
+// }
+
 export function getCSSColorFromMTG(colors: string[] | undefined): string {
 	// takes a card's colors[] property and returns a CSS color as a string.
 	if (!colors) {

@@ -419,12 +419,17 @@ export function DeckBuilder(): ReactElement {
 		//old:  const resp = await parseCardName(cname);
 		const resp = await arrowFetchCard(cardName);
 
-		console.log("cardName", cardName.length);
+		console.log(`running handleLookup("${cardName}")...`);
+		let alertMsg: string = "";
 		if (resp) {
 			if (resp.object === "card") {
-				console.log("resp length", resp.length);
+				alertMsg = `${resp.name} is a valid card!`;
+			} else {
+				alertMsg = `Card name "${cardName}" does not exist!`;
 			}
 		}
+		console.log(alertMsg);
+		alert(alertMsg);
 	};
 
 	const handleLoadDeck = () => {
@@ -471,7 +476,7 @@ export function DeckBuilder(): ReactElement {
 		<>
 			<section id="deckBuilder">
 				<br />
-				<input type="text" id="searchtext" />
+				{/* <input type="text" id="searchtext" /> */}
 				<br />
 				Buttons for testing purposes:
 				<br />
@@ -509,8 +514,8 @@ export function DeckBuilder(): ReactElement {
 				</form>
 				{/* <DecklistForm /> */}
 				<button onClick={handleLoadDeck}>Load deck!</button>
-				<button onClick={() => batchCheck(deck!.main)}>{`test batchCheck()`}</button> {/* sloppy NNA, but its for testing */}
-				<button onClick={() => deckCheck(deck!)}>{`test deckCheck()`}</button> {/* sloppy NNA, but its for testing */}
+				{/* <button onClick={() => batchCheck(deck!.main)}>{`test batchCheck()`}</button> sloppy NNA, but its for testing */}
+				{/* <button onClick={() => deckCheck(deck!)}>{`test deckCheck()`}</button> sloppy NNA, but its for testing */}
 			</section>
 		</>
 	);
