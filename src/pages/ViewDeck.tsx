@@ -8,10 +8,23 @@ import { DecklistDisplay } from "../components";
 export function ViewDeck(): ReactElement {
 	const deckContext = useContext(DeckContext);
 	const [loadedDeck, setloadedDeck] = useState<IDeck>(useLoaderData() as IDeck);
+
+	function filterRealCards(deck: IDeck): IDeck {
+		// filters out invalid cards to avoid issues with DecklistDisplay
+		return {
+			...deck,
+			main: deck.main.filter((card) => card.is_real === true),
+			sideboard: deck.sideboard.filter((card) => card.is_real === true),
+		};
+	}
+
+	let filteredDeck = filterRealCards(loadedDeck);
+
 	return (
 		<>
 			<section id="viewDeck">
-				<DecklistDisplay deck={loadedDeck} />
+				{/* <DecklistDisplay deck={loadedDeck} /> */}
+				<DecklistDisplay deck={filteredDeck} />
 			</section>
 		</>
 	);
