@@ -180,8 +180,8 @@ export const arrowFetchCard = async (cardName: string): Promise<ICard | null> =>
 		}
 	} catch (e) {
 		okSoFar = false;
+		console.error(e);
 		return null;
-		// console.error(e);
 	}
 
 	return okSoFar ? retVal : null; // always returning retVal might be fine. TODO: test this!
@@ -235,36 +235,105 @@ export const emptyDeck = (): IDeck => {
 };
 
 export function sortDeck(deckToSort: IDeck): IDeck {
-	// sorts deck by card type,
-	// todo: allow sorting by different parameters.
-	const sortOrder = ["creature", "enchantment", "sorcery", "instant", "artifact", "planeswalker", "battle", "land"];
+	// sorts deck by card type.
 
-	// Helper function to get the sorting index based on card type
+	// helper function to pick which card type to sort by.
+	function getMainCardType(types: string[]): string {
+		// takes an array of card types like ["Enchantment", "Creature"] and returns whichever type appears earliest in typePrioOrder[], in this example Creature.
+		// returns "Unknown" if no match was found
+
+		// TODO: handle split cards I.E ("Creature // Land").
+
+		if (types.length == 0) {
+			return "Unknown";
+		}
+		if (types.length === 1) {
+			return capitalizeWords(types[0]);
+			// return types[0].toLowerCase();
+		}
+
+		// ensure types are all capitalized correctly (1st letter upper case) for the comparison ("Creature"):
+		// for (let i = 0; i < types.length; i++) {
+		// 	types[i] = capitalizeWords(types[i]);
+		// }
+
+		const typeSet = new Set(types);
+
+		// todo: discard subtypes (for "Artifact Creature - Golem", only look at "Artifact Creature")
+
+		// todo: discard the backside on double-faced cards (for "Legendary Creature - Demon // Legendary Land", only look at "Legendary Creature")
+
+		const typePrioOrder = [
+			// special types: (higher priority for this purpuuse)
+			"Dungeon", // non-trad
+			"Emblem", // token, planeswalker
+			"Hero", // non-tournament
+			"Vanguard", // non-tournament, 1997
+			"Conspiracy", // Commander, Conspiracy
+			"Scheme", // Commander, Archenemy
+			"Phenomenon", // Commander, Planechase
+			"Plane", // Commander, Planechase
+			"Bounty", // Commander
+			// normal types:
+			"Land",
+			"Battle", // sort of normal
+			"Planeswalker",
+			"Creature",
+			"Artifact",
+			"Enchantment",
+			"Sorcery",
+			"Instant",
+		];
+
+		for (const type of typePrioOrder) {
+			// "loop through prio order list"
+			if (typeSet.has(type)) {
+				// first match = ignore the rest and return it. (returning "creature" for an artifact creature.)
+				return type;
+			}
+		}
+
+		return "Unknown"; // this never runs
+	}
+
+	// helper function to get the sorting index based on card type
 	const getSortIndex = (typeLine: string): number => {
-		// Find the first word (main card type) in type_line, convert to lowercase for case-insensitive comparison
-		const mainType = typeLine.split(" ")[0].toLowerCase();
+		const types: string[] = typeLine.split(" ");
+
+		console.log("types: ", types);
+
+		const mainType: string = getMainCardType(types);
+		console.log("mainType: ", mainType);
 
 		// Get the sort order index or a high value (sort alphabetically after known types)
 		const index = sortOrder.indexOf(mainType);
 		return index === -1 ? sortOrder.length + mainType.charCodeAt(0) : index;
 	};
 
-	// Sort the main deck
+	console.log("in sortDeck() before sort. incoming deck:", deckToSort);
+
+	const sortOrder = ["Creature", "Artifact", "Enchantment", "Corcery", "Instant", "Planeswalker", "Battle", "Land", "Unknown"];
+
+	// sort the main deck
 	const sortedMain = [...deckToSort.main].sort((a, b) => {
 		return getSortIndex(a.card_info?.type_line || "") - getSortIndex(b.card_info?.type_line || "");
 	});
+	console.log("in sortDeck(). Sorted maindeck:", sortedMain);
 
-	// Sort the sideboard in the same way
+	// sort the sideboard
 	const sortedSideboard = [...deckToSort.sideboard].sort((a, b) => {
 		return getSortIndex(a.card_info?.type_line || "") - getSortIndex(b.card_info?.type_line || "");
 	});
+	console.log("in sortDeck(). Sorted sideboard:", sortedSideboard);
 
-	// Return the sorted deck
-	return {
+	// the sorted deck
+	const retVal = {
 		...deckToSort,
 		main: sortedMain,
 		sideboard: sortedSideboard,
 	};
+	console.log("in sortDeck(). returning sorted deck:", retVal);
+	return retVal;
 }
 
 // for (let i = 0; i < deckSorted.main.length; i++) {

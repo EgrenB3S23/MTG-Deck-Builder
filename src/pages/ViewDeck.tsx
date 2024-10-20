@@ -3,6 +3,7 @@ import { DeckContext } from "../context";
 import { useLoaderData } from "react-router-dom";
 import { IDeck } from "../interfaces";
 import { DecklistDisplay } from "../components";
+import { sortDeck } from "../utils";
 // displays decklist sorted by card type, showing various stats and other goodies.
 
 export function ViewDeck(): ReactElement {
@@ -18,13 +19,13 @@ export function ViewDeck(): ReactElement {
 		};
 	}
 
-	let filteredDeck = filterRealCards(loadedDeck);
+	let filteredDeck = filterRealCards(loadedDeck); // removes invalid cads (like misspelled names)
 
 	return (
 		<>
 			<section id="viewDeck">
 				{/* <DecklistDisplay deck={loadedDeck} /> */}
-				<DecklistDisplay deck={filteredDeck} />
+				<DecklistDisplay deck={sortDeck(filteredDeck)} />
 			</section>
 		</>
 	);

@@ -33,8 +33,10 @@ export function DecklistDisplay({ deck }: DecklistDisplayProps): ReactElement {
 	};
 
 	const handleSortButton = () => {
-		let sortedDeck = deck;
-		deck = sortDeck(sortedDeck);
+		console.log("deck pre-sort:", deck);
+		let sortedDeck = sortDeck(deck);
+		setDecklist(deck);
+		console.log("deck post-sort:", sortedDeck);
 	};
 
 	return (
