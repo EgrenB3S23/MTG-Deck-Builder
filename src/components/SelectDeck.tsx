@@ -4,22 +4,36 @@ import { getCardCounts, getDeckFromLSByID } from "../utils";
 
 interface SelectDeckProps {
 	decks: IDeck[];
+	onLoadButton: (inputDeck: IDeck) => void;
+	// onDeleteButton: Function;
+	// onRenameButton: Function;
 }
 
-export function SelectDeck({ decks }: SelectDeckProps): ReactElement {
+// export function SelectDeck({ decks, onLoadButton }: SelectDeckProps): ReactElement {
+export const SelectDeck: React.FC<SelectDeckProps> = ({ decks, onLoadButton }) => {
 	// displays a list of saved decks and buttons to load, delete and rename.
 
-	const [decksArray, setDecksArray] = useState<IDeck[]>(decks);
-	const [selectedDeck, setSelectedDeck] = useState<IDeck | null>(null);
+	// const [decksArray, setDecksArray] = useState<IDeck[]>(decks);
+	// console.log(decks);
 
-	const handleLoadButton = () => {};
+	const [targetDeck, setTargetDeck] = useState<IDeck | null>(null); // contains the deck that is currently selected in the <select> element
+
+	// const handleLoadButton = () => {};
+	const handleLoadButton = () => {
+		console.log("targetDeck: ", targetDeck);
+
+		if (targetDeck) {
+			onLoadButton(targetDeck); // Pass the selected deck up to the parent component
+		}
+	};
 	const handleDeleteButton = () => {};
 	const handleRenameButton = () => {};
 
 	const handleSelectChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+		// whenever a new deck is selected from the list, set it as "targetDeck"
 		const selectedDeckId = event.target.value;
-		const deck = getDeckFromLSByID(selectedDeckId);
-		setSelectedDeck(deck); // Update state with the selected deck
+		const deck = getDeckFromLSByID(selectedDeckId); // TODO: change to passable function (the aim is to not use localStorage at all inside this component)
+		setTargetDeck(deck); // Update state with the selected deck
 	};
 
 	const handleTestButton = () => {
@@ -82,13 +96,13 @@ export function SelectDeck({ decks }: SelectDeckProps): ReactElement {
 					</div>
 				</div>
 				<div className="deckDetails">
-					{selectedDeck ? (
+					{targetDeck ? (
 						<div>
-							<h2>{selectedDeck.name}</h2>
-							<h3>ID: {selectedDeck.id}</h3>
-							<h2>Main: {selectedDeck.main.length} cards</h2>
-							<h2>Main: {getCardCounts(selectedDeck).main} cards</h2>
-							{selectedDeck.main.map((card, index) => (
+							<h2>{targetDeck.name}</h2>
+							<h3>ID: {targetDeck.id}</h3>
+							<h2>Main: {targetDeck.main.length} cards</h2>
+							<h2>Main: {getCardCounts(targetDeck).main} cards</h2>
+							{targetDeck.main.map((card, index) => (
 								<p key={index}>
 									{!card.is_real ? (
 										<span>
@@ -102,9 +116,9 @@ export function SelectDeck({ decks }: SelectDeckProps): ReactElement {
 									{card.count} <a>{card.name}</a>
 								</p>
 							))}
-							<h2>Sideboard: {getCardCounts(selectedDeck).sideboard} cards</h2>
-							{/* <h3>Sideboard: {selectedDeck.sideboard.length} cards</h3> */}
-							{selectedDeck.sideboard.map((card, index) => (
+							<h2>Sideboard: {getCardCounts(targetDeck).sideboard} cards</h2>
+							{/* <h3>Sideboard: {targetDeck.sideboard.length} cards</h3> */}
+							{targetDeck.sideboard.map((card, index) => (
 								<p key={index}>
 									{card.count} {card.name}
 								</p>
@@ -119,4 +133,4 @@ export function SelectDeck({ decks }: SelectDeckProps): ReactElement {
 			</section>
 		</>
 	);
-}
+};
