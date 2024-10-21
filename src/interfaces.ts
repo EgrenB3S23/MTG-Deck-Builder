@@ -170,6 +170,7 @@ export interface IDecklistEntry {
 export interface IDeck {
 	//represents an mtg decklist.
 	// todo 241016: checkDeckLegalityLocally() function to loop through all cards in deck for their format legalities, then return resulting deck legalities. (if all cards are legal in standard, deck is legal in standard, etc)
+	id: string;
 	name: string;
 	main: IDecklistEntry[];
 	sideboard: IDecklistEntry[];
@@ -207,6 +208,9 @@ export interface ICardNameReport {
 }
 
 export interface IDeckStrings {
+	//represents an deck object but as raw strings (for use in input fields)
+	//used by createDeckFromStrings()
+	idStr: string;
 	nameStr: string;
 	mainStr: string;
 	sideboardStr: string;

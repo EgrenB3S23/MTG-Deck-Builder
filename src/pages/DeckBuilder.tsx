@@ -1,13 +1,15 @@
-import { FormEvent, ReactElement, useState, useContext } from "react";
+import { FormEvent, ReactElement, useState, useContext, useEffect } from "react";
 import { IDeck, IDecklistEntry, IDecklistEntryFull, IDeckStrings } from "../interfaces";
-import { arrowFetchCard, baseURL, dummyDeck, dummyMain } from "../utils";
+import { arrowFetchCard, baseURL, dummyDeck, dummyMain, generateUniqueID, getDecksFromLS } from "../utils";
 import { DeckContext } from "../context";
+import { SelectDeck } from "../components/SelectDeck";
 
 export function DeckBuilder(): ReactElement {
 	// raw textbox data:
-	const [rawDeckName, setRawDeckName] = useState("");
-	const [rawDeckMain, setRawDeckMain] = useState("");
-	const [rawDeckSB, setRawDeckSB] = useState("");
+	const [rawDeckID, setRawDeckID] = useState<string>("");
+	const [rawDeckName, setRawDeckName] = useState<string>("");
+	const [rawDeckMain, setRawDeckMain] = useState<string>("");
+	const [rawDeckSB, setRawDeckSB] = useState<string>("");
 
 	// deck state:
 	const [deck, setDeck] = useState<IDeck | null>(null);
@@ -19,6 +21,11 @@ export function DeckBuilder(): ReactElement {
 	// 		setDeck(JSON.parse(storedDeck));
 	// 	}
 	// }, []);
+
+	useEffect(() => {
+		// setup deckID input field on mount to have at the ready when saving deck.
+		setRawDeckID(generateUniqueID);
+	}, []);
 
 	// Save deck to state and localStorage
 	const saveDeck = (newDeck: IDeck) => {
@@ -71,6 +78,7 @@ export function DeckBuilder(): ReactElement {
 
 	function createStringsFromDeckNew(input: IDeck): IDeckStrings {
 		console.log("in createStringsFromDeck...");
+		console.log("input.ID", input.id);
 		console.log("input.name", input.name);
 		console.log("input.main", input.main);
 		console.log("input.sideboard", input.sideboard);
@@ -101,6 +109,7 @@ export function DeckBuilder(): ReactElement {
 		]
 		*/
 
+		const idStrOutput = input.id ? input.id : generateUniqueID();
 		const nameStrOutput = input.name;
 		let mainStrOutput = "";
 		let sideboardStrOutput = "";
@@ -113,11 +122,13 @@ export function DeckBuilder(): ReactElement {
 			sideboardStrOutput = `${sideboardStrOutput}\n${entry.count} ${entry.name}`;
 		}
 
+		console.log("nameStrOutput trim:", idStrOutput);
 		console.log("nameStrOutput trim:", nameStrOutput);
 		console.log("mainStrOutput trim:", mainStrOutput);
 		console.log("sideboardStrOutput trim:", sideboardStrOutput);
 
 		return {
+			idStr: idStrOutput.trim(),
 			nameStr: nameStrOutput.trim(),
 			mainStr: mainStrOutput.trim(),
 			sideboardStr: sideboardStrOutput.trim(),
@@ -176,13 +187,17 @@ export function DeckBuilder(): ReactElement {
 		return [nameStr.trim(), mainStr.trim(), sideboardStr.trim()];
 	}
 
-	function createDeckFromStrings(inputName: string, inputMain: string, inputSB: string): IDeck {
+	function createDeckFromStrings(inputID: string, inputName: string, inputMain: string, inputSB: string): IDeck {
 		// 241014 TODO
 		// 1. turn strings into arrays of lines
 		// 2. for main: turn each line into decklistEntry
 		// 3. for sb: turn each line into decklistEntry
 		// 4. combine name, main, sb into IDeck object.
 		// 5. return IDeck object
+
+		if (!inputID) {
+			inputID = generateUniqueID();
+		}
 
 		// 1. turn strings into arrays of lines
 		let linesMain: string[] = inputMain.split("\n");
@@ -215,6 +230,7 @@ export function DeckBuilder(): ReactElement {
 		console.log("deckSB: ", deckSB);
 
 		return {
+			id: inputID,
 			name: inputName,
 			main: deckMain,
 			sideboard: deckSB,
@@ -388,7 +404,7 @@ export function DeckBuilder(): ReactElement {
 		console.log("");
 		console.log("### in handleSaveDeck...");
 		// get a complete deck object from textbox strings:
-		let deckUnchecked: IDeck = createDeckFromStrings(rawDeckName, rawDeckMain, rawDeckSB);
+		let deckUnchecked: IDeck = createDeckFromStrings(rawDeckID, rawDeckName, rawDeckMain, rawDeckSB);
 		console.log("deckUnchecked: ", deckUnchecked);
 		console.log("deck state before setDeck: ", deck);
 		// setDeck({
@@ -448,6 +464,7 @@ export function DeckBuilder(): ReactElement {
 		if (deckToLoad !== null) {
 			setDeck({
 				// save deck object to state
+				id: deckToLoad.id,
 				name: deckToLoad.name,
 				main: deckToLoad.main,
 				sideboard: deckToLoad.sideboard,
@@ -456,6 +473,7 @@ export function DeckBuilder(): ReactElement {
 			// 3. set raws
 
 			const stringsObj = createStringsFromDeckNew(deckToLoad);
+			const rawIDStr = stringsObj.idStr;
 			const rawNameStr = stringsObj.nameStr;
 			const rawMainStr = stringsObj.mainStr;
 			const rawSideboardStr = stringsObj.sideboardStr;
@@ -463,9 +481,11 @@ export function DeckBuilder(): ReactElement {
 			//old one, testing if new works.
 			// const [rawNameStr = "", rawMainStr = "", rawSideboardStr = ""] = createStringsFromDeck(deckToLoad);
 
+			setRawDeckID(rawIDStr);
 			setRawDeckName(rawNameStr);
 			setRawDeckMain(rawMainStr);
 			setRawDeckSB(rawSideboardStr);
+			console.log("rawIDStr: ", rawIDStr);
 			console.log("rawNameStr: ", rawNameStr);
 			console.log("rawMainStr: ", rawMainStr);
 			console.log("rawSideboardStr: ", rawSideboardStr);
@@ -478,15 +498,22 @@ export function DeckBuilder(): ReactElement {
 				<br />
 				{/* <input type="text" id="searchtext" /> */}
 				<br />
-				Buttons for testing purposes:
+				{/* Buttons for testing purposes:
 				<br />
 				<button onClick={() => handleLookup("Mox Opal")}>"Mox Opal"</button>
 				<button onClick={() => handleLookup("Mox opal")}>"Mox opal"</button>
 				<button onClick={() => handleLookup("MOX OPAL")}>"MOX OPAL"</button>
 				<button onClick={() => handleLookup("mox opal")}>"mox opal"</button>
 				<button onClick={() => handleLookup("Moxopal")}>"Moxopal"</button>
-				<button onClick={() => handleLookup("moxpal")}>"moxpal"</button>
+				<button onClick={() => handleLookup("moxpal")}>"moxpal"</button> */}
 				<form id="decklist-form" onSubmit={handleSaveDeck}>
+					<input //
+						name="deckID"
+						id="deckID"
+						placeholder="Deck ID"
+						value={rawDeckID}
+						onChange={(e) => setRawDeckID(e.target.value)}
+					/>
 					<input //
 						name="deckName"
 						id="deckName"
@@ -516,6 +543,9 @@ export function DeckBuilder(): ReactElement {
 				<button onClick={handleLoadDeck}>Load deck!</button>
 				{/* <button onClick={() => batchCheck(deck!.main)}>{`test batchCheck()`}</button> sloppy NNA, but its for testing */}
 				{/* <button onClick={() => deckCheck(deck!)}>{`test deckCheck()`}</button> sloppy NNA, but its for testing */}
+			</section>
+			<section>
+				<SelectDeck decks={getDecksFromLS()} />
 			</section>
 		</>
 	);
