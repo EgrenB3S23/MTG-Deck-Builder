@@ -1,10 +1,30 @@
-interface ICardImageUris {
-	small: string;
-	normal: string;
-	large: string;
-	png: string;
-	art_crop: string;
-	border_crop: string;
+export interface ICardFace {
+	object: string;
+	name: string;
+	mana_cost: string;
+	type_line: string;
+	oracle_text: string;
+	artist: string;
+	artist_id: string;
+	illustration_id: string;
+
+	power?: number;
+	toughness?: number;
+	loyalty?: number;
+	watermark?: string;
+	colors?: string[];
+	image_uris?: {
+		small: string;
+		normal: string;
+		large: string;
+		png: string;
+		art_crop: string;
+		border_crop: string;
+
+		[key: string]: unknown; //  catch-all
+	};
+
+	[key: string]: unknown; //  catch-all
 }
 
 export interface ICard {
@@ -14,7 +34,16 @@ export interface ICard {
 	released_at: Date;
 	uri: string;
 	scryfall_uri: string;
-	image_uris: ICardImageUris;
+	image_uris: {
+		small: string;
+		normal: string;
+		large: string;
+		png: string;
+		art_crop: string;
+		border_crop: string;
+
+		[key: string]: unknown; //  catch-all
+	};
 
 	// card info (gameplay-relevant properties)
 	name: string;
@@ -22,7 +51,7 @@ export interface ICard {
 	cmc: number;
 	type_line: string;
 	oracle_text: string;
-	colors: [string];
+	colors: string[];
 	color_identity: string[];
 
 	// misc
@@ -39,11 +68,13 @@ export interface ICard {
 
 		[key: string]: string; // catch-all for any additional formats. (any other field under 'legalities' will be typed as a string)
 	};
+
+	card_faces?: ICardFace[];
 	[key: string]: unknown; //  catch-all
 }
 
 export interface IScryfallCard {
-	//unlike ICard, IScryfallCard is a *complete* interface for "card" objects returned from Scryfall's API.
+	//unused as of 241021. Intent is to replace ICard with this as a a *complete* interface for card objects returned from Scryfall's API.
 	object: string;
 	id: string;
 	oracle_id: string;
@@ -52,6 +83,8 @@ export interface IScryfallCard {
 	tcgplayer_id: number;
 	cardmarket_id: number;
 	name: string;
+	power: number;
+	toughness: number;
 	lang: string;
 	released_at: string; // Date string in format "YYYY-MM-DD"
 	uri: string;
@@ -122,6 +155,8 @@ export interface IScryfallCard {
 	prices: { [key: string]: string | null }; // Object with string keys and string or null values
 	related_uris: { [key: string]: string }; // Object with string keys and string values
 	purchase_uris: { [key: string]: string }; // Object with string keys and string values
+
+	card_faces?: IScryfallCard[];
 }
 
 export interface IDecklistEntry {

@@ -1,5 +1,5 @@
 import { ReactElement, useState } from "react";
-import { ICard, IDeck, IDecklistEntry, IScryfallCard } from "../interfaces";
+import { ICard, IDeck, IDecklistEntry } from "../interfaces";
 import { Link } from "react-router-dom";
 import "../css/DecklistDisplay.css";
 import { getCSSColorFromMTG, sortDeck } from "../utils";
@@ -14,6 +14,7 @@ interface DecklistDisplayProps {
 }
 
 export function DecklistDisplay({ deck }: DecklistDisplayProps): ReactElement {
+	// takes the provided deck prop and displays the cards as a list with various features.
 	const [hoveredCardInfo, setHoveredCardInfo] = useState<ICard | null>(null);
 	const [cursorPos, setCursorPos] = useState({ x: 0, y: 0 });
 
@@ -33,15 +34,34 @@ export function DecklistDisplay({ deck }: DecklistDisplayProps): ReactElement {
 	};
 
 	const handleSortButton = () => {
-		let sortedDeck = deck;
-		deck = sortDeck(sortedDeck);
+		console.log("deck pre-sort:", deck);
+		let sortedDeck = sortDeck(deck);
+		setDecklist(deck);
+		console.log("deck post-sort:", sortedDeck);
+	};
+
+	const handleTestButton = () => {
+		/* test getRelevantTypes(): works!
+		const types = ["Legendary", "Creature", "//", "Legendary", "Land"];
+		console.log("types before:", types);
+		let typesNew = getRelevantTypes(types);
+		console.log("types after:", typesNew);
+		*/
+		/* test getFrontFace(): TODO 241020
+		const cardBefore = exampleTransformCard();
+		console.log(cardBefore);
+
+		const cardAfter = getFrontFace(cardBefore);
+		console.log(cardAfter);
+		*/
 	};
 
 	return (
 		<>
 			<br />
 			<br />
-			<button onClick={handleSortButton}>Sort deck</button>
+			{/* <button onClick={handleSortButton}>Sort deck</button> */}
+			{/* <button onClick={handleTestButton}>Test!</button> */}
 			<br />
 			<section className="decklist-display" onMouseMove={handleCursorMove}>
 				<h2 className="deck-name">{deck.name}</h2>
