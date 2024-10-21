@@ -5,12 +5,7 @@ import "../css/DecklistDisplay.css";
 import { getCSSColorFromMTG, sortDeck } from "../utils";
 
 interface DecklistDisplayProps {
-	deck: {
-		id?: string;
-		name: string;
-		main: IDecklistEntry[];
-		sideboard: IDecklistEntry[];
-	};
+	deck: IDeck;
 }
 
 export function DecklistDisplay({ deck }: DecklistDisplayProps): ReactElement {
