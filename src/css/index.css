@@ -1,7 +1,9 @@
 @import url("./CardImg.css");
 @import url("./DeckBuilder.css");
+@import url("./DecklistDisplay.css");
 @import url("./Header.css");
 @import url("./LandingPage.css");
+@import url("./SelectDeck.css");
 
 * {
 	margin: 0;

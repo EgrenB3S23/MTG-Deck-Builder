@@ -128,36 +128,35 @@ export async function parseCardName(cardName: string) {
 }
  */
 
-export async function fetchCard(cardName: string) {
-	// takes a card name like "Mox Opal" and returns the card info as an ICard object if the card exists. Otherwise returns null.
-	// console.log(`Fetching card "${cardName}"...`);
-	let okSoFar = true;
-	let retVal: ICard | null = null;
+// export async function fetchCard(cardName: string) {
+// 	// takes a card name like "Mox Opal" and returns the card info as an ICard object if the card exists. Otherwise returns null.
+// 	// console.log(`Fetching card "${cardName}"...`);
+// 	let okSoFar = true;
+// 	let retVal: ICard | null = null;
 
-	try {
-		let searchStr = cardName.replace(" ", "+");
-		// Send fetch request
-		const resp = await fetch(`${baseURL}/cards/named?exact=${searchStr}`);
-		let data = await resp.json();
-		// retVal = await data;
+// 	try {
+// 		let searchStr = cardName.replace(" ", "+");
+// 		// Send fetch request
+// 		const resp = await fetch(`${baseURL}/cards/named?exact=${searchStr}`);
+// 		let data = await resp.json();
+// 		// retVal = await data;
 
-		if ((await data.object) === "error") {
-			console.log(`Card "${cardName}" does not exist!`);
-			// retVal = null;
-			okSoFar = false;
-		} else if ((await data.object) === "card") {
-			console.log(`Card "${cardName}" found!`);
-			retVal = data; // ICard Object
-		}
-	} catch (e) {
-		okSoFar = false;
-		// console.error(e);
-	}
-	return okSoFar ? retVal : null; // always returning retVal might be fine. TODO: test this!
-}
+// 		if ((await data.object) === "error") {
+// 			console.log(`Card "${cardName}" does not exist!`);
+// 			// retVal = null;
+// 			okSoFar = false;
+// 		} else if ((await data.object) === "card") {
+// 			console.log(`Card "${cardName}" found!`);
+// 			retVal = data; // ICard Object
+// 		}
+// 	} catch (e) {
+// 		okSoFar = false;
+// 		// console.error(e);
+// 	}
+// 	return okSoFar ? retVal : null; // always returning retVal might be fine. TODO: test this!
+// }
 
 export const arrowFetchCard = async (cardName: string): Promise<ICard | null> => {
-	// todo 241015: replace fetchCard with this.
 	// to run multiple fetches in parallell (instead of one at a time), use :
 	// const cardNames = ["Mox Opal", "Black Lotus", "Sol Ring"];
 	// const data = await Promise.all(cardNames.map(arrowFetchCard));
@@ -227,7 +226,7 @@ export function capitalizeWords(str: string): string {
 
 export const emptyDeck = (): IDeck => {
 	return {
-		// id: "",
+		id: "",
 		name: "",
 		main: [],
 		sideboard: [],
@@ -336,10 +335,6 @@ export function sortDeck(deckToSort: IDeck): IDeck {
 	return retVal;
 }
 
-// for (let i = 0; i < deckSorted.main.length; i++) {
-// 	let entry = deckSorted.main[i];
-// }
-
 export function getCSSColorFromMTG(colors: string[] | undefined): string {
 	// takes a card's colors[] property and returns a CSS color as a string.
 	if (!colors) {
@@ -420,6 +415,71 @@ export function getFrontFace(card: ICard) {
 		// split card example: https://api.scryfall.com/cards/named?exact=alive-well
 	}
 	return retVal;
+}
+
+export const generateUniqueID = (prefix: string = "deck") => {
+	// usage: let id = generateUniqueID() 			// "1729156346783"
+	// usage: let id = generateUniqueID("deck")		// "deck-1729156346783"
+
+	return `${prefix}${prefix ? "-" : ""}${Date.now()}`;
+};
+
+// export const getDecksFromLS = () => {
+export function getDecksFromLS() {
+	const LSKey: string = "decks";
+
+	const dataFromLS: string | null = localStorage.getItem(LSKey);
+	let decksFromLS: IDeck[] = [];
+	try {
+		if (dataFromLS) {
+			decksFromLS = JSON.parse(dataFromLS);
+			return decksFromLS;
+		}
+	} catch (error) {
+		console.log("Couldn't load saved decks", error);
+	}
+	return decksFromLS;
+}
+
+export function getDeckFromLSByID(id: string) {
+	// TODO: WIP 241021
+	let decksFromLS: IDeck[] = [];
+
+	let foundDeck: IDeck | undefined = undefined;
+	try {
+		decksFromLS = getDecksFromLS();
+		foundDeck = decksFromLS.find((deck) => deck.id == id);
+	} catch (error) {
+		console.log(`Couldn't load deck with ID ${id}, e`);
+	}
+
+	return foundDeck ? foundDeck : null;
+}
+
+export function getCardCounts(deck: IDeck) {
+	// takes a deck and returns the number of cards in main and in sideboard as an object.
+	console.log("in getCardCounts()");
+
+	let mainCount: number = 0;
+	let sideboardCount: number = 0;
+
+	for (let i = 0; i < deck.main.length; i++) {
+		const entry = deck.main[i];
+		if (entry.is_real) {
+			mainCount += entry.count;
+			console.log(`Fount ${entry.count}x ${entry.name}. Total count so far: ${mainCount}`);
+		} else {
+			console.log(`No card found with name "${entry.name}". Total count so far: ${mainCount}`);
+		}
+	}
+
+	for (let i = 0; i < deck.sideboard.length; i++) {
+		const entry = deck.sideboard[i];
+		sideboardCount += entry.count;
+		console.log(`Fount ${entry.count}x ${entry.name}. Total count so far: ${sideboardCount}`);
+	}
+
+	return { main: mainCount, sideboard: sideboardCount };
 }
 
 export function exampleTransformCard() {
