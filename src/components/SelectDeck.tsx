@@ -104,16 +104,16 @@ export const SelectDeck: React.FC<SelectDeckProps> = ({ decks, onLoadButton }) =
 							<h2>Main: {getCardCounts(targetDeck).main} cards</h2>
 							{targetDeck.main.map((card, index) => (
 								<p key={index}>
+									{card.count} <a>{card.name}</a>
 									{!card.is_real ? (
 										<span>
-											<a className="decklist-entry-warning" title="invalid/unverified card name">
-												{"⚠"}
+											<a className="decklist-entry-warning" title="⚠Error: invalid/unverified card name. If spelling is correct, try saving this deck again to retrigger verification.">
+												{<span className="warning-emoji">⚠</span>}
 											</a>
 										</span>
 									) : (
 										""
 									)}
-									{card.count} <a>{card.name}</a>
 								</p>
 							))}
 							<h2>Sideboard: {getCardCounts(targetDeck).sideboard} cards</h2>
