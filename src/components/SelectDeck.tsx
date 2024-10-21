@@ -1,6 +1,6 @@
 import { ReactElement, useState } from "react";
-import { IDeck, IDecklistEntry } from "../interfaces";
-import { getDecksFromLS, getDeckFromLSByID } from "../utils";
+import { IDeck } from "../interfaces";
+import { getCardCounts, getDeckFromLSByID } from "../utils";
 
 interface SelectDeckProps {
 	decks: IDeck[];
@@ -9,11 +9,18 @@ interface SelectDeckProps {
 export function SelectDeck({ decks }: SelectDeckProps): ReactElement {
 	// displays a list of saved decks and buttons to load, delete and rename.
 
-	const [decksList, setDecksList] = useState<IDeck[]>(decks);
+	const [decksArray, setDecksArray] = useState<IDeck[]>(decks);
+	const [selectedDeck, setSelectedDeck] = useState<IDeck | null>(null);
 
 	const handleLoadButton = () => {};
 	const handleDeleteButton = () => {};
 	const handleRenameButton = () => {};
+
+	const handleSelectChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+		const selectedDeckId = event.target.value;
+		const deck = getDeckFromLSByID(selectedDeckId);
+		setSelectedDeck(deck); // Update state with the selected deck
+	};
 
 	const handleTestButton = () => {
 		const msg = getDeckFromLSByID("1729505197787");
@@ -50,12 +57,10 @@ export function SelectDeck({ decks }: SelectDeckProps): ReactElement {
 					<button onClick={handleTestButton} className="btn" id="testBtn" value="test">
 						TEST
 					</button>
-					<select name="deckPicker" id="deckPicker" size={20}>
+					<select name="deckPicker" id="deckPicker" size={20} onChange={handleSelectChange}>
 						{decks.map((deck, index) => (
 							<option key={index} value={deck.id}>
-								{deck.name}
-								{" - ID: "}
-								{deck.id}
+								{deck.name} - ID: {deck.id}
 							</option>
 						))}
 					</select>
@@ -75,6 +80,41 @@ export function SelectDeck({ decks }: SelectDeckProps): ReactElement {
 							Rename
 						</button>
 					</div>
+				</div>
+				<div className="deckDetails">
+					{selectedDeck ? (
+						<div>
+							<h2>{selectedDeck.name}</h2>
+							<h3>ID: {selectedDeck.id}</h3>
+							<h2>Main: {selectedDeck.main.length} cards</h2>
+							<h2>Main: {getCardCounts(selectedDeck).main} cards</h2>
+							{selectedDeck.main.map((card, index) => (
+								<p key={index}>
+									{!card.is_real ? (
+										<span>
+											<a className="decklist-entry-warning" title="invalid/unverified card name">
+												{"⚠"}
+											</a>
+										</span>
+									) : (
+										""
+									)}
+									{card.count} <a>{card.name}</a>
+								</p>
+							))}
+							<h2>Sideboard: {getCardCounts(selectedDeck).sideboard} cards</h2>
+							{/* <h3>Sideboard: {selectedDeck.sideboard.length} cards</h3> */}
+							{selectedDeck.sideboard.map((card, index) => (
+								<p key={index}>
+									{card.count} {card.name}
+								</p>
+							))}
+
+							{/* Add more details as needed */}
+						</div>
+					) : (
+						<p>Select a deck to display details here.</p>
+					)}
 				</div>
 			</section>
 		</>

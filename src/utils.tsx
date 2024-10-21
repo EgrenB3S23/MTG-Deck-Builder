@@ -456,6 +456,32 @@ export function getDeckFromLSByID(id: string) {
 	return foundDeck ? foundDeck : null;
 }
 
+export function getCardCounts(deck: IDeck) {
+	// takes a deck and returns the number of cards in main and in sideboard as an object.
+	console.log("in getCardCounts()");
+
+	let mainCount: number = 0;
+	let sideboardCount: number = 0;
+
+	for (let i = 0; i < deck.main.length; i++) {
+		const entry = deck.main[i];
+		if (entry.is_real) {
+			mainCount += entry.count;
+			console.log(`Fount ${entry.count}x ${entry.name}. Total count so far: ${mainCount}`);
+		} else {
+			console.log(`No card found with name "${entry.name}". Total count so far: ${mainCount}`);
+		}
+	}
+
+	for (let i = 0; i < deck.sideboard.length; i++) {
+		const entry = deck.sideboard[i];
+		sideboardCount += entry.count;
+		console.log(`Fount ${entry.count}x ${entry.name}. Total count so far: ${sideboardCount}`);
+	}
+
+	return { main: mainCount, sideboard: sideboardCount };
+}
+
 export function exampleTransformCard() {
 	return {
 		name: "Arguel's Blood Fast // Temple of Aclazotz",
