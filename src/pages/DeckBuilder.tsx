@@ -502,7 +502,7 @@ export function DeckBuilder(): ReactElement {
 					/>
 					<button type="submit">Save deck</button>
 				</form>
-				<button onClick={handleLoadDeck}>Load deck!</button>
+				{/* <button onClick={handleLoadDeck}>(test)Load example deck</button> */}
 			</section>
 			<section>
 				<SelectDeck decks={getDecksFromLS()} onLoadButton={handleLoadDeckForProps} triggerUpdate={triggerUpdate} />
