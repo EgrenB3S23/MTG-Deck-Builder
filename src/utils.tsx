@@ -80,81 +80,7 @@ export let dummyMain = [
 		name: "lotus bloom",
 		count: 4,
 	},
-	// {
-	// 	name: "3",
-	// 	count: 3,
-	// },
-	// {
-	// 	name: "a",
-	// 	count: 2,
-	// },
 ];
-
-/* 
-export async function parseCardName(cardName: string) {
-	// todo 241015: OLD
-	// TO BE REPLACED by fetchCard()
-
-	// returns formatted card name if card exists, otherwise returns empty string
-	let okSoFar = true;
-	let retVal: string = "";
-
-	try {
-		let searchStr = cardName.replace(" ", "+");
-		// Send fetch request
-		const resp = await fetch(`${baseURL}/cards/named?exact=${searchStr}`);
-		let data = await resp.json();
-		// retVal = await data;
-
-		if ((await data.object) === "error") {
-			console.log(`Card "${cardName}" does not exist!`);
-			retVal = "";
-			okSoFar = false;
-		} else if ((await data.object) === "card") {
-			console.log(`Card "${cardName}" found!`);
-			console.log(`Card "${data.name}" found!`);
-			retVal = capitalizeWords(data.name); // "mox opal" -> "Mox Opal"
-		}
-	} catch (e) {
-		okSoFar = false;
-		// console.error(e);
-	}
-	if (!okSoFar) {
-		return "";
-	} else {
-		console.log("retVal:", retVal);
-	}
-	return retVal;
-}
- */
-
-// export async function fetchCard(cardName: string) {
-// 	// takes a card name like "Mox Opal" and returns the card info as an ICard object if the card exists. Otherwise returns null.
-// 	// console.log(`Fetching card "${cardName}"...`);
-// 	let okSoFar = true;
-// 	let retVal: ICard | null = null;
-
-// 	try {
-// 		let searchStr = cardName.replace(" ", "+");
-// 		// Send fetch request
-// 		const resp = await fetch(`${baseURL}/cards/named?exact=${searchStr}`);
-// 		let data = await resp.json();
-// 		// retVal = await data;
-
-// 		if ((await data.object) === "error") {
-// 			console.log(`Card "${cardName}" does not exist!`);
-// 			// retVal = null;
-// 			okSoFar = false;
-// 		} else if ((await data.object) === "card") {
-// 			console.log(`Card "${cardName}" found!`);
-// 			retVal = data; // ICard Object
-// 		}
-// 	} catch (e) {
-// 		okSoFar = false;
-// 		// console.error(e);
-// 	}
-// 	return okSoFar ? retVal : null; // always returning retVal might be fine. TODO: test this!
-// }
 
 export const arrowFetchCard = async (cardName: string): Promise<ICard | null> => {
 	// to run multiple fetches in parallell (instead of one at a time), use :
@@ -185,20 +111,6 @@ export const arrowFetchCard = async (cardName: string): Promise<ICard | null> =>
 
 	return okSoFar ? retVal : null; // always returning retVal might be fine. TODO: test this!
 };
-
-async function fetchMultipleCards(cardNames: string[]) {
-	// batch run multiple instances of arrowFetchCard in parallell to reduce waiting time.
-	// input: list of card names: ["Mox Opal", ...]
-	// output: list of ICard[]
-
-	// example usage
-	// fetchMultipleCards(cardNames).then((results) => {
-	//	console.log(results);
-	// });
-
-	const results = await Promise.all(cardNames.map(arrowFetchCard));
-	return results;
-}
 
 export function capitalizeWords(str: string): string {
 	// todo: maybe swap to:
@@ -252,9 +164,6 @@ export function sortDeck(deckToSort: IDeck): IDeck {
 		}
 
 		// ensure types are all capitalized correctly (1st letter upper case) for the comparison ("Creature"):
-		// for (let i = 0; i < types.length; i++) {
-		// 	types[i] = capitalizeWords(types[i]);
-		// }
 
 		const typeSet = new Set(types);
 
@@ -292,7 +201,7 @@ export function sortDeck(deckToSort: IDeck): IDeck {
 			}
 		}
 
-		return "Unknown"; // this never runs
+		return "Unknown"; // this should never
 	}
 
 	// helper function to get the sorting index based on card type
@@ -306,12 +215,38 @@ export function sortDeck(deckToSort: IDeck): IDeck {
 
 		// Get the sort order index or a high value (sort alphabetically after known types)
 		const index = sortOrder.indexOf(mainType);
+
 		return index === -1 ? sortOrder.length + mainType.charCodeAt(0) : index;
+		/* equivalent to the line above:
+		if (index === -1) {
+			return sortOrder.length + mainType.charCodeAt(0);
+		} else {§
+			return index;
+		} */
 	};
 
 	console.log("in sortDeck() before sort. incoming deck:", deckToSort);
 
-	const sortOrder = ["Creature", "Artifact", "Enchantment", "Sorcery", "Instant", "Planeswalker", "Battle", "Land", "Unknown"];
+	const sortOrder = [
+		"Creature",
+		"Artifact",
+		"Enchantment",
+		"Sorcery",
+		"Instant",
+		"Planeswalker",
+		"Battle",
+		"Dungeon", // non-trad
+		"Emblem", // token, planeswalker
+		"Hero", // non-tournament
+		"Vanguard", // non-tournament, 1997
+		"Conspiracy", // Commander, Conspiracy
+		"Scheme", // Commander, Archenemy
+		"Phenomenon", // Commander, Planechase
+		"Plane", // Commander, Planechase
+		"Bounty",
+		"Land",
+		"Unknown",
+	];
 
 	// sort the main deck
 	const sortedMain = [...deckToSort.main].sort((a, b) => {

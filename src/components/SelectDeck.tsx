@@ -1,4 +1,4 @@
-import { ReactElement, useState } from "react";
+import { ReactElement, useEffect, useState } from "react";
 import { IDeck } from "../interfaces";
 import { getCardCounts, getDeckFromLSByID } from "../utils";
 
@@ -17,6 +17,16 @@ export const SelectDeck: React.FC<SelectDeckProps> = ({ decks, onLoadButton }) =
 	// console.log(decks);
 
 	const [targetDeck, setTargetDeck] = useState<IDeck | null>(null); // contains the deck that is currently selected in the <select> element
+
+	let [cardCounts, setCardCounts] = useState<{ main: number; sideboard: number }>({ main: 0, sideboard: 0 });
+
+	useEffect(() => {
+		// update cardCounts when a new deck is clicked in the list.
+		if (targetDeck) {
+			setCardCounts(getCardCounts(targetDeck));
+			console.log("cardCounts updated:", cardCounts);
+		}
+	}, [targetDeck]);
 
 	// const handleLoadButton = () => {};
 	const handleLoadButton = () => {
@@ -100,11 +110,10 @@ export const SelectDeck: React.FC<SelectDeckProps> = ({ decks, onLoadButton }) =
 						<div>
 							<h2>{targetDeck.name}</h2>
 							<h3>ID: {targetDeck.id}</h3>
-							<h2>Main: {targetDeck.main.length} cards</h2>
-							<h2>Main: {getCardCounts(targetDeck).main} cards</h2>
+							{/* <h2>Main: {targetDeck.main.length} cards</h2> */}
+							<h2>Main: {cardCounts.main} cards</h2>
 							{targetDeck.main.map((card, index) => (
 								<p key={index}>
-									{card.count} <a>{card.name}</a>
 									{!card.is_real ? (
 										<span>
 											<a className="decklist-entry-warning" title="⚠Error: invalid/unverified card name. If spelling is correct, try saving this deck again to retrigger verification.">
@@ -112,11 +121,12 @@ export const SelectDeck: React.FC<SelectDeckProps> = ({ decks, onLoadButton }) =
 											</a>
 										</span>
 									) : (
-										""
+										"✔"
 									)}
+									{card.count} <a>{card.name}</a>
 								</p>
 							))}
-							<h2>Sideboard: {getCardCounts(targetDeck).sideboard} cards</h2>
+							<h2>Sideboard: {cardCounts.sideboard} cards</h2>
 							{/* <h3>Sideboard: {targetDeck.sideboard.length} cards</h3> */}
 							{targetDeck.sideboard.map((card, index) => (
 								<p key={index}>
@@ -134,3 +144,7 @@ export const SelectDeck: React.FC<SelectDeckProps> = ({ decks, onLoadButton }) =
 		</>
 	);
 };
+
+/*
+✅
+ */

@@ -1,6 +1,11 @@
 .selectDeck {
 	.warning-emoji {
-		font-size: 1.5rem;
+		/* font-size: 1.5rem; */
 		cursor: help;
+	}
+
+	select {
+		min-width: 20rem;
+		margin: 1rem 1rem 1rem 0;
 	}
 }
