@@ -1,6 +1,6 @@
 import { FormEvent, ReactElement, useState, useContext, useEffect } from "react";
 import { IDeck, IDecklistEntry, IDecklistEntryFull, IDeckStrings } from "../interfaces";
-import { arrowFetchCard, baseURL, dummyDeck, dummyMain, generateUniqueID, getDecksFromLS, saveDeckToLS } from "../utils";
+import { arrowFetchCard, baseURL, deleteDeckInLS, dummyDeck, dummyMain, generateUniqueID, getDecksFromLS, saveDeckToLS } from "../utils";
 import { DeckContext } from "../context";
 import { SelectDeck } from "../components/SelectDeck";
 
@@ -422,6 +422,12 @@ export function DeckBuilder(): ReactElement {
 		console.log("loadedDeck: ", loadedDeck);
 	};
 
+	const handleDeleteDeckForProps = (inputID: string) => {
+		console.log("in handleDeleteDeckForProps()...");
+		deleteDeckInLS(inputID);
+		setTriggerUpdate(!triggerUpdate);
+	};
+
 	const handleLoadDeck = () => {
 		// todo 241014
 		// 1. load IDeck object from localStorage
@@ -460,6 +466,7 @@ export function DeckBuilder(): ReactElement {
 			console.log("rawNameStr: ", rawNameStr);
 			console.log("rawMainStr: ", rawMainStr);
 			console.log("rawSideboardStr: ", rawSideboardStr);
+			setTriggerUpdate(!triggerUpdate);
 		}
 	};
 
@@ -505,7 +512,7 @@ export function DeckBuilder(): ReactElement {
 				{/* <button onClick={handleLoadDeck}>(test)Load example deck</button> */}
 			</section>
 			<section>
-				<SelectDeck decks={getDecksFromLS()} onLoadButton={handleLoadDeckForProps} triggerUpdate={triggerUpdate} />
+				<SelectDeck decks={getDecksFromLS()} onLoadButton={handleLoadDeckForProps} onDeleteButton={handleDeleteDeckForProps} triggerUpdate={triggerUpdate} />
 			</section>
 		</>
 	);

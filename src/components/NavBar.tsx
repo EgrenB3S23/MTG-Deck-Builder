@@ -10,11 +10,11 @@ export function NavBar(): ReactElement {
 						<h2>Home</h2>
 					</NavLink>
 				</li>
-				<li>
+				{/* <li>
 					<NavLink to="/search">
 						<h2>Search</h2>
 					</NavLink>
-				</li>
+				</li> */}
 				<li>
 					<NavLink to="/deckbuilder">
 						<h2>Deck Builder</h2>

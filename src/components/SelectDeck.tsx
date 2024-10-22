@@ -1,34 +1,62 @@
 import { ReactElement, useEffect, useState } from "react";
 import { IDeck } from "../interfaces";
-import { getCardCounts, getDeckFromLSByID } from "../utils";
+import { deleteDeckInLS, getCardCounts, getDeckFromLSByID, getDecksFromLS } from "../utils";
 
 interface SelectDeckProps {
 	decks: IDeck[];
 	onLoadButton: (inputDeck: IDeck) => void;
+	onDeleteButton: (inputID: string) => void;
 	triggerUpdate: boolean;
 	// onDeleteButton: Function;
 	// onRenameButton: Function;
 }
-
+interface IOption {
+	value: string; // deck ID
+	label: string; // deck name
+}
 // export function SelectDeck({ decks, onLoadButton }: SelectDeckProps): ReactElement {
-export const SelectDeck: React.FC<SelectDeckProps> = ({ decks, onLoadButton, triggerUpdate }) => {
+export const SelectDeck: React.FC<SelectDeckProps> = ({ decks, onLoadButton, onDeleteButton, triggerUpdate }) => {
 	// displays a list of saved decks and buttons to load, delete and rename.
 
+	// const {targetID, setTargetID} = useState<string>;
 	const [targetDeck, setTargetDeck] = useState<IDeck | null>(null); // contains the deck that is currently selected in the <select> element
 
-	let [cardCounts, setCardCounts] = useState<{ main: number; sideboard: number }>({ main: 0, sideboard: 0 });
+	const [options, setOptions] = useState<IOption[]>([]);
+	const [selectedOption, setSelectedOption] = useState<string>("");
+
+	const [cardCounts, setCardCounts] = useState<{ main: number; sideboard: number }>({ main: 0, sideboard: 0 });
+
+	useEffect(() => {
+		const decks = getDecksFromLS();
+
+		// convert list of decks into list of IOptions
+		const deckOptions = decks.map((deck: IDeck) => ({
+			value: deck.id,
+			label: `${deck.name || "(No Name)"} - ID:${deck.id}`,
+		}));
+
+		setOptions(deckOptions);
+	}, [, triggerUpdate]); // run on mount
+
+	useEffect(() => {
+		// update cardCounts when a new deck is clicked in the list.
+		setTargetDeck(getDeckFromLSByID(selectedOption));
+	}, [selectedOption]);
 
 	useEffect(() => {
 		// update cardCounts when a new deck is clicked in the list.
 		if (targetDeck) {
 			setCardCounts(getCardCounts(targetDeck));
-			console.log("cardCounts updated:", cardCounts);
+		} else {
+			setCardCounts({ main: 0, sideboard: 0 });
 		}
 	}, [targetDeck]);
 
-	useEffect(() => {
-		// Any logic to handle when triggerUpdate changes
-	}, [triggerUpdate]); // Re-run when triggerUpdate changes
+	// useEffect(() => {
+	// 	if (targetDeck) {
+	// 		setTargetDeck(getDeckFromLSByID(targetDeck.id));
+	// 	}
+	// }, [triggerUpdate]); // Re-run when triggerUpdate changes (sent by parent component)
 
 	const handleLoadButton = () => {
 		console.log("targetDeck: ", targetDeck);
@@ -37,16 +65,41 @@ export const SelectDeck: React.FC<SelectDeckProps> = ({ decks, onLoadButton, tri
 			onLoadButton(targetDeck); // Pass the selected deck up to the parent component
 		}
 	};
-	const handleDeleteButton = () => {};
-	const handleRenameButton = () => {};
+
+	const handleDeleteButton = () => {
+		// 1. delete targetDeck from LS
+		// 2. set targetDeck = null
+		// 3. update options (the entries in <select>)
+
+		if (targetDeck) {
+			deleteDeckInLS(targetDeck.id);
+			setTargetDeck(null);
+
+			const decks = getDecksFromLS();
+			// convert list of decks into list of IOptions
+			const deckOptions = decks.map((deck: IDeck) => ({
+				value: deck.id,
+				label: `${deck.name || "(No Name)"} - ID:${deck.id}`,
+			}));
+			setOptions(deckOptions);
+		} else {
+			console.log("No deck selected, nothing to delete.");
+		}
+		// triggerUpdate = !triggerUpdate;
+	};
 
 	const handleSelectChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
 		// whenever a new deck is selected from the list, set it as "targetDeck"
-		const selectedDeckId = event.target.value;
-		const deck = getDeckFromLSByID(selectedDeckId); // TODO: change to passable function (the aim is to not use localStorage at all inside this component)
-		setTargetDeck(deck); // Update state with the selected deck
+		const selectedDeckID: string = event.target.value;
+		const deck = getDeckFromLSByID(selectedDeckID); // TODO: change to passable function (the aim is to not use localStorage at all inside this component)
+		setTargetDeck(deck);
+		// setTargetDeck(deck); // Update state with the selected deck
 	};
 
+	const handleSelectChangeNew = (e: React.ChangeEvent<HTMLSelectElement>) => {
+		//
+		setSelectedOption(e.target.value);
+	};
 	const handleTestButton = () => {
 		const msg = getDeckFromLSByID("1729505197787");
 
@@ -61,10 +114,26 @@ export const SelectDeck: React.FC<SelectDeckProps> = ({ decks, onLoadButton, tri
 					<button onClick={handleTestButton} className="btn" id="testBtn" value="test">
 						TEST
 					</button>
-					<select name="deckPicker" id="deckPicker" size={20} onChange={handleSelectChange}>
+
+					{/* <select name="deckPicker" id="deckPicker" size={20} onChange={handleSelectChange}>
 						{decks.map((deck, index) => (
 							<option key={index} value={deck.id}>
 								{deck.name} - ID: {deck.id}
+							</option>
+						))}
+					</select> */}
+
+					{/* <select name="deckPickerNew" id="deckPickerNew" size={20} value={selectedOption} onChange={handleSelectChangeNew}> */}
+					{/* <select name="deckPickerNew" id="deckPickerNew" size={20} value={selectedOption} onChange={(e) => setSelectedOption(e.target.value)}> */}
+					<select name="deckPickerNew" id="deckPickerNew" size={20} onChange={(e) => setSelectedOption(e.target.value)}>
+						{/* {decks.map((deck, index) => (
+							<option key={index} value={deck.id}>
+								{deck.name} - ID: {deck.id}
+							</option>
+						))} */}
+						{options.map((option) => (
+							<option key={option.value} value={option.value}>
+								{option.label}
 							</option>
 						))}
 					</select>
@@ -134,7 +203,3 @@ export const SelectDeck: React.FC<SelectDeckProps> = ({ decks, onLoadButton, tri
 		</>
 	);
 };
-
-/*
-✅
- */
