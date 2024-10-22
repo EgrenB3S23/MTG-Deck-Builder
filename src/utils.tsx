@@ -391,6 +391,28 @@ export function getDeckFromLSByID(id: string) {
 	return foundDeck ? foundDeck : null;
 }
 
+export function saveDeckToLS(deckToSave: IDeck) {
+	let decksFromLS: IDeck[] = [];
+	decksFromLS = getDecksFromLS(); // fetches all saved decks
+
+	let foundAMatch: boolean = false;
+	for (let i = 0; i < decksFromLS.length; i++) {
+		const deckFromLS = decksFromLS[i];
+		if (deckFromLS.id === deckToSave.id) {
+			// (if same id, overwrite. )
+			foundAMatch = true;
+			decksFromLS[i] = deckToSave; // overwrite stored deck with new.
+		}
+	}
+
+	if (!foundAMatch) {
+		// if no matching id was found, saving deck as a new entry.
+		decksFromLS.push(deckToSave);
+	}
+
+	localStorage.setItem("decks", JSON.stringify(decksFromLS));
+}
+
 export function getCardCounts(deck: IDeck) {
 	// takes a deck and returns the number of cards in main and in sideboard as an object.
 	console.log("in getCardCounts()");
