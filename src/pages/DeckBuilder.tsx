@@ -240,10 +240,8 @@ export function DeckBuilder(): ReactElement {
 		const data = await Promise.all(input.map((entry) => arrowFetchCard(entry.name))); // "for each card in list, fetch card info."
 
 		for (let i = 0; i < retVal.length; i++) {
-			// if(data[i] !== null && retVal[i] !== null){
 			if (data[i] && retVal[i]) {
 				//if here, card exists!
-				// const entry = retVal[i];
 				retVal[i].card_info = data[i]!; // ! : non-null assertion operator ("i hereby solemnly swear that data[i] is not null")
 				if (retVal[i].card_info!.name) {
 					retVal[i].name = retVal[i].card_info!.name; // replace written name (i.e. "moxlotus") with correctly spaced & capitalized name ("Mox Lotus") from card_info.
