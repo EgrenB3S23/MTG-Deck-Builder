@@ -5,12 +5,13 @@ import { getCardCounts, getDeckFromLSByID } from "../utils";
 interface SelectDeckProps {
 	decks: IDeck[];
 	onLoadButton: (inputDeck: IDeck) => void;
+	triggerUpdate: boolean;
 	// onDeleteButton: Function;
 	// onRenameButton: Function;
 }
 
 // export function SelectDeck({ decks, onLoadButton }: SelectDeckProps): ReactElement {
-export const SelectDeck: React.FC<SelectDeckProps> = ({ decks, onLoadButton }) => {
+export const SelectDeck: React.FC<SelectDeckProps> = ({ decks, onLoadButton, triggerUpdate }) => {
 	// displays a list of saved decks and buttons to load, delete and rename.
 
 	const [targetDeck, setTargetDeck] = useState<IDeck | null>(null); // contains the deck that is currently selected in the <select> element
@@ -25,7 +26,10 @@ export const SelectDeck: React.FC<SelectDeckProps> = ({ decks, onLoadButton }) =
 		}
 	}, [targetDeck]);
 
-	// const handleLoadButton = () => {};
+	useEffect(() => {
+		// Any logic to handle when triggerUpdate changes
+	}, [triggerUpdate]); // Re-run when triggerUpdate changes
+
 	const handleLoadButton = () => {
 		console.log("targetDeck: ", targetDeck);
 
@@ -72,9 +76,9 @@ export const SelectDeck: React.FC<SelectDeckProps> = ({ decks, onLoadButton }) =
 						<button onClick={handleDeleteButton} className="btn" id="deleteDeckBtn" value="Delete">
 							Delete
 						</button>
-						<button onClick={handleRenameButton} className="btn" id="deleteDeckBtn" value="Rename">
+						{/* <button onClick={handleRenameButton} className="btn" id="deleteDeckBtn" value="Rename">
 							Rename
-						</button>
+						</button> */}
 					</div>
 				</div>
 				<div className="deckDetails">

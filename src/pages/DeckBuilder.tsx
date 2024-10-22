@@ -14,6 +14,9 @@ export function DeckBuilder(): ReactElement {
 	// deck state:
 	const [loadedDeck, setLoadedDeck] = useState<IDeck | null>(null);
 
+	// hackjob to force-refresh SelectDeck component:
+	const [triggerUpdate, setTriggerUpdate] = useState(false); // Trigger state for updates
+
 	useEffect(() => {
 		// setup deckID input field on mount to have at the ready when saving deck.
 		setRawDeckID(generateUniqueID);
@@ -383,12 +386,16 @@ export function DeckBuilder(): ReactElement {
 			.then(() => console.log("deckUnchecked after deckCheck:", deckUnchecked))
 			.then(() => localStorage.setItem("deckUnchecked", JSON.stringify(deckUnchecked)))
 			.then(() => console.log("deck LS after deckCheck AFTER setItem:", JSON.parse(localStorage.getItem("deckUnchecked") || "NULL DECK OMG")))
-			.then(() => saveDeckToLS(deckUnchecked));
+			.then(() => saveDeckToLS(deckUnchecked))
+			.then(() => setTriggerUpdate(!triggerUpdate));
 
 		let elapsed = new Date().getTime() - start; // end timer
 		console.log(`deckCheck() from handleSaveDeck finished. Time elapsed: ${elapsed} ms.`);
 
-		// saveDeckToLS(deckUnchecked);
+		// forceRefresh SelectDeck:
+		console.warn("triggerUpdate before: ", triggerUpdate);
+		// setTriggerUpdate(!triggerUpdate); // toggle the trigger state to force re-render
+		// console.warn("triggerUpdate after: ", triggerUpdate);
 	};
 
 	const handleLookup = async (cardName: string) => {
@@ -495,10 +502,10 @@ export function DeckBuilder(): ReactElement {
 					/>
 					<button type="submit">Save deck</button>
 				</form>
-				<button onClick={handleLoadDeck}>Load deck!</button>
+				{/* <button onClick={handleLoadDeck}>(test)Load example deck</button> */}
 			</section>
 			<section>
-				<SelectDeck decks={getDecksFromLS()} onLoadButton={handleLoadDeckForProps} />
+				<SelectDeck decks={getDecksFromLS()} onLoadButton={handleLoadDeckForProps} triggerUpdate={triggerUpdate} />
 			</section>
 		</>
 	);
