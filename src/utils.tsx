@@ -359,36 +359,26 @@ export const generateUniqueID = (prefix: string = "deck") => {
 	return `${prefix}${prefix ? "-" : ""}${Date.now()}`;
 };
 
-// export const getDecksFromLS = () => {
-export function getDecksFromLS() {
-	const LSKey: string = "decks";
-
-	const dataFromLS: string | null = localStorage.getItem(LSKey);
-	let decksFromLS: IDeck[] = [];
-	try {
-		if (dataFromLS) {
-			decksFromLS = JSON.parse(dataFromLS);
-			return decksFromLS;
-		}
-	} catch (error) {
-		console.log("Couldn't load saved decks", error);
-	}
-	return decksFromLS;
+export function getDecksFromLS(): IDeck[] {
+	// fetches decks from localStorage and returns as an array of deck objects.
+	const resp = localStorage.getItem("decks");
+	return resp ? JSON.parse(resp) : [];
 }
 
-export function getDeckFromLSByID(id: string) {
-	// TODO: WIP 241021
-	let decksFromLS: IDeck[] = [];
+export function getDeckFromLSByID(id: string): IDeck | null {
+	// fetches deck with the provided ID from localStorage and returns it as an IDeck. returns null if no match was found.
+	let decksFromLS: IDeck[] = getDecksFromLS();
 
 	let foundDeck: IDeck | undefined = undefined;
-	try {
-		decksFromLS = getDecksFromLS();
-		foundDeck = decksFromLS.find((deck) => deck.id == id);
-	} catch (error) {
-		console.log(`Couldn't load deck with ID ${id}, e`);
+	foundDeck = decksFromLS.find((deck) => deck.id == id);
+
+	if (foundDeck) {
+		console.log(`Fetching deck with ID:(${id} from localStorage:`, foundDeck);
+	} else {
+		console.warn(`Couldn't load deck with ID:(${id})`);
 	}
 
-	return foundDeck ? foundDeck : null;
+	return foundDeck || null;
 }
 
 export function saveDeckToLS(deckToSave: IDeck) {
@@ -413,9 +403,23 @@ export function saveDeckToLS(deckToSave: IDeck) {
 	localStorage.setItem("decks", JSON.stringify(decksFromLS));
 }
 
+export function deleteDeckInLS(idToDelete: string) {
+	//deletes deck in LS with the provided ID.
+	let decksFromLS: IDeck[] = [];
+	decksFromLS = getDecksFromLS(); // fetches all saved decks
+
+	for (const deckFromLS of decksFromLS) {
+		if (deckFromLS.id === idToDelete) {
+			decksFromLS.splice(decksFromLS.indexOf(deckFromLS), 1);
+		}
+	}
+
+	localStorage.setItem("decks", JSON.stringify(decksFromLS));
+}
+
 export function getCardCounts(deck: IDeck) {
 	// takes a deck and returns the number of cards in main and in sideboard as an object.
-	console.log("in getCardCounts()");
+	// console.log("in getCardCounts()");
 
 	let mainCount: number = 0;
 	let sideboardCount: number = 0;
@@ -424,17 +428,27 @@ export function getCardCounts(deck: IDeck) {
 		const entry = deck.main[i];
 		if (entry.is_real) {
 			mainCount += entry.count;
-			console.log(`Fount ${entry.count}x ${entry.name}. Total count so far: ${mainCount}`);
+			// console.log(`Found ${entry.count}x ${entry.name}. Total count so far: ${mainCount}`);
 		} else {
-			console.log(`No card found with name "${entry.name}". Total count so far: ${mainCount}`);
+			console.warn(`No card found with name "${entry.name}".`);
 		}
 	}
 
 	for (let i = 0; i < deck.sideboard.length; i++) {
 		const entry = deck.sideboard[i];
-		sideboardCount += entry.count;
-		console.log(`Fount ${entry.count}x ${entry.name}. Total count so far: ${sideboardCount}`);
+		if (entry.is_real) {
+			sideboardCount += entry.count;
+			// console.log(`Found ${entry.count}x ${entry.name}. Total count so far: ${sideboardCount}`);
+		} else {
+			console.warn(`No card found with name "${entry.name}".`);
+		}
 	}
+
+	// for (let i = 0; i < deck.sideboard.length; i++) {
+	// 	const entry = deck.sideboard[i];
+	// 	sideboardCount += entry.count;
+	// 	console.log(`Found ${entry.count}x ${entry.name}. Total count so far: ${sideboardCount}`);
+	// }
 
 	return { main: mainCount, sideboard: sideboardCount };
 }
