@@ -24,9 +24,9 @@ export function DeckBuilder(): ReactElement {
 
 	useEffect(() => {
 		// setup deckID input field on mount to have at the ready when saving deck.
-		console.log(`loadedDeck changed!:`, loadedDeck);
 
 		if (loadedDeck) {
+			console.log(`loadedDeck changed:`, loadedDeck);
 			const deckStrings = createStringsFromDeckNew(loadedDeck);
 			setRawDeckID(deckStrings.idStr);
 			setRawDeckName(deckStrings.nameStr);
@@ -42,18 +42,18 @@ export function DeckBuilder(): ReactElement {
 	};
 
 	// load deck from localStorage return deck as IDeck object.
-	const loadDeck = () => {
-		console.log("in LoadDeck()");
-		const deckFromLocalStorage = localStorage.getItem("deckUnchecked");
-		console.log("deckFromLocalStorage:", deckFromLocalStorage);
+	// const loadDeck = () => {
+	// 	console.log("in LoadDeck()");
+	// 	const deckFromLocalStorage = localStorage.getItem("deckUnchecked");
+	// 	console.log("deckFromLocalStorage:", deckFromLocalStorage);
 
-		if (deckFromLocalStorage) {
-			const deckToLoad: IDeck = JSON.parse(deckFromLocalStorage);
-			// console.log("JSON.parse(deckFromLocalStorage):", JSON.parse(deckFromLocalStorage));
-			console.log("deckToLoad: (should be identical to previous line)", deckToLoad);
-			return deckToLoad;
-		} else return null;
-	};
+	// 	if (deckFromLocalStorage) {
+	// 		const deckToLoad: IDeck = JSON.parse(deckFromLocalStorage);
+	// 		// console.log("JSON.parse(deckFromLocalStorage):", JSON.parse(deckFromLocalStorage));
+	// 		console.log("deckToLoad: (should be identical to previous line)", deckToLoad);
+	// 		return deckToLoad;
+	// 	} else return null;
+	// };
 
 	function toDecklistEntry(input: string): IDecklistEntry | null {
 		// example input: "4 mox opal"
@@ -428,47 +428,47 @@ export function DeckBuilder(): ReactElement {
 		setTriggerUpdate(!triggerUpdate);
 	};
 
-	const handleLoadDeck = () => {
-		// todo 241014
-		// 1. load IDeck object from localStorage
-		// 2. save the IDeckobject with setDeck()
-		// 3. convert IDeck object to raw decklist strings and send those to decklist form textboxes)
+	// const handleLoadDeck = () => {
+	// 	// todo 241014
+	// 	// 1. load IDeck object from localStorage
+	// 	// 2. save the IDeckobject with setDeck()
+	// 	// 3. convert IDeck object to raw decklist strings and send those to decklist form textboxes)
 
-		console.log("handleLoadDeck(): ");
+	// 	console.log("handleLoadDeck(): ");
 
-		// 1. load IDeck object from localStorage
-		const deckToLoad = loadDeck(); // IDeck object (or null if error)
-		console.log("deckToLoad: ", deckToLoad);
+	// 	// 1. load IDeck object from localStorage
+	// 	const deckToLoad = loadDeck(); // IDeck object (or null if error)
+	// 	console.log("deckToLoad: ", deckToLoad);
 
-		// 2. save the IDeckobject with setDeck()
-		if (deckToLoad !== null) {
-			setLoadedDeck({
-				// save deck object to state
-				id: deckToLoad.id,
-				name: deckToLoad.name,
-				main: deckToLoad.main,
-				sideboard: deckToLoad.sideboard,
-			});
+	// 	// 2. save the IDeckobject with setDeck()
+	// 	if (deckToLoad !== null) {
+	// 		setLoadedDeck({
+	// 			// save deck object to state
+	// 			id: deckToLoad.id,
+	// 			name: deckToLoad.name,
+	// 			main: deckToLoad.main,
+	// 			sideboard: deckToLoad.sideboard,
+	// 		});
 
-			// 3. set raws
+	// 		// 3. set raws
 
-			const stringsObj = createStringsFromDeckNew(deckToLoad);
-			const rawIDStr = stringsObj.idStr;
-			const rawNameStr = stringsObj.nameStr;
-			const rawMainStr = stringsObj.mainStr;
-			const rawSideboardStr = stringsObj.sideboardStr;
+	// 		const stringsObj = createStringsFromDeckNew(deckToLoad);
+	// 		const rawIDStr = stringsObj.idStr;
+	// 		const rawNameStr = stringsObj.nameStr;
+	// 		const rawMainStr = stringsObj.mainStr;
+	// 		const rawSideboardStr = stringsObj.sideboardStr;
 
-			setRawDeckID(rawIDStr);
-			setRawDeckName(rawNameStr);
-			setRawDeckMain(rawMainStr);
-			setRawDeckSB(rawSideboardStr);
-			console.log("rawIDStr: ", rawIDStr);
-			console.log("rawNameStr: ", rawNameStr);
-			console.log("rawMainStr: ", rawMainStr);
-			console.log("rawSideboardStr: ", rawSideboardStr);
-			setTriggerUpdate(!triggerUpdate);
-		}
-	};
+	// 		setRawDeckID(rawIDStr);
+	// 		setRawDeckName(rawNameStr);
+	// 		setRawDeckMain(rawMainStr);
+	// 		setRawDeckSB(rawSideboardStr);
+	// 		console.log("rawIDStr: ", rawIDStr);
+	// 		console.log("rawNameStr: ", rawNameStr);
+	// 		console.log("rawMainStr: ", rawMainStr);
+	// 		console.log("rawSideboardStr: ", rawSideboardStr);
+	// 		setTriggerUpdate(!triggerUpdate);
+	// 	}
+	// };
 
 	return (
 		<>

@@ -36,11 +36,13 @@ export const SelectDeck: React.FC<SelectDeckProps> = ({ decks, onLoadButton, onD
 		}));
 
 		setOptions(deckOptions);
-	}, [, triggerUpdate]); // run on mount
+	}, [, triggerUpdate]); // runs on mount and when requested by parent component.
 
 	useEffect(() => {
 		// update cardCounts when a new deck is clicked in the list.
-		setTargetDeck(getDeckFromLSByID(selectedOption));
+		if (selectedOption) {
+			setTargetDeck(getDeckFromLSByID(selectedOption));
+		}
 	}, [selectedOption]);
 
 	useEffect(() => {

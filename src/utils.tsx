@@ -372,7 +372,11 @@ export function getDeckFromLSByID(id: string): IDeck | null {
 	let foundDeck: IDeck | undefined = undefined;
 	foundDeck = decksFromLS.find((deck) => deck.id == id);
 
-	console.warn(`Couldn't load deck with ID:(${id})`);
+	if (foundDeck) {
+		console.log(`Fetching deck with ID:(${id} from localStorage:`, foundDeck);
+	} else {
+		console.warn(`Couldn't load deck with ID:(${id})`);
+	}
 
 	return foundDeck || null;
 }
@@ -415,7 +419,7 @@ export function deleteDeckInLS(idToDelete: string) {
 
 export function getCardCounts(deck: IDeck) {
 	// takes a deck and returns the number of cards in main and in sideboard as an object.
-	console.log("in getCardCounts()");
+	// console.log("in getCardCounts()");
 
 	let mainCount: number = 0;
 	let sideboardCount: number = 0;
@@ -424,17 +428,27 @@ export function getCardCounts(deck: IDeck) {
 		const entry = deck.main[i];
 		if (entry.is_real) {
 			mainCount += entry.count;
-			console.log(`Fount ${entry.count}x ${entry.name}. Total count so far: ${mainCount}`);
+			// console.log(`Found ${entry.count}x ${entry.name}. Total count so far: ${mainCount}`);
 		} else {
-			console.log(`No card found with name "${entry.name}". Total count so far: ${mainCount}`);
+			console.warn(`No card found with name "${entry.name}".`);
 		}
 	}
 
 	for (let i = 0; i < deck.sideboard.length; i++) {
 		const entry = deck.sideboard[i];
-		sideboardCount += entry.count;
-		console.log(`Fount ${entry.count}x ${entry.name}. Total count so far: ${sideboardCount}`);
+		if (entry.is_real) {
+			sideboardCount += entry.count;
+			// console.log(`Found ${entry.count}x ${entry.name}. Total count so far: ${sideboardCount}`);
+		} else {
+			console.warn(`No card found with name "${entry.name}".`);
+		}
 	}
+
+	// for (let i = 0; i < deck.sideboard.length; i++) {
+	// 	const entry = deck.sideboard[i];
+	// 	sideboardCount += entry.count;
+	// 	console.log(`Found ${entry.count}x ${entry.name}. Total count so far: ${sideboardCount}`);
+	// }
 
 	return { main: mainCount, sideboard: sideboardCount };
 }
