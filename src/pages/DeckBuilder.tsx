@@ -11,9 +11,6 @@ export function DeckBuilder(): ReactElement {
 	const [rawDeckMain, setRawDeckMain] = useState<string>("");
 	const [rawDeckSB, setRawDeckSB] = useState<string>("");
 
-	// deck state, used to store deck before verification which is required to store it in deckContext.
-	const [loadedDeck, setLoadedDeck] = useState<IDeck | null>(null);
-
 	// deck shows up here when user wants to save a deck.
 	const [deckToVerify, setDeckToVerify] = useState<IDeck | null>(null);
 
@@ -21,7 +18,7 @@ export function DeckBuilder(): ReactElement {
 	const [deckToStore, setDeckToStore] = useState<IDeck | null>(null);
 
 	// store a deck for use across any future tools that needs a decklist (such as goldfishing simulator)
-	const deckContext = useContext(DeckContext);
+	// const deckContext = useContext(DeckContext);
 
 	// mirror/replacement for localStorage:
 	const decksContext = useContext(DecksContext);
@@ -29,31 +26,6 @@ export function DeckBuilder(): ReactElement {
 	// hackjob to force-refresh SelectDeck component:
 	const [triggerUpdate, setTriggerUpdate] = useState(false); // Trigger state for updates
 
-	useEffect(() => {
-		// setup deckID input field on mount to have at the ready when saving deck.
-		// setRawDeckID(generateUniqueID("d"));
-	}, []);
-
-	useEffect(() => {
-		// setup deckID input field on mount to have at the ready when saving deck.
-
-		if (loadedDeck) {
-			console.log(`loadedDeck changed:`, loadedDeck);
-			const deckStrings = createStringsFromDeck(loadedDeck);
-			setRawDeckID(deckStrings.idStr);
-			setRawDeckName(deckStrings.nameStr);
-			setRawDeckMain(deckStrings.mainStr);
-			setRawDeckSB(deckStrings.sideboardStr);
-		} else {
-			// if loadedDeck is null,
-			setRawDeckID(generateUniqueID());
-			setRawDeckName("");
-			setRawDeckMain("");
-			setRawDeckSB("");
-		}
-	}, [loadedDeck]);
-
-	//
 	useEffect(() => {
 		console.log(`in useEffect(,[deckToVerify])`, deckToVerify);
 
@@ -254,7 +226,6 @@ export function DeckBuilder(): ReactElement {
 			setDeckToStore(deckChecked);
 		} else {
 			console.warn(`deck verification failed. check spelling. Deck: `, deckIn);
-			// setDeckToStore(null);
 		}
 		setDeckToVerify(null);
 	}
@@ -298,18 +269,18 @@ export function DeckBuilder(): ReactElement {
 		const deckBeforeCheck: IDeck = createDeckFromStrings(rawDeckID, rawDeckName, rawDeckMain, rawDeckSB);
 
 		setDeckToVerify(deckBeforeCheck);
-
-		// let deckChecked: IDeck = deckCheck(deckBeforeCheck);
-
-		// if deckUnchecked
 	};
 
 	const handleLoadDeckForProps = (inputDeck: IDeck) => {
 		console.log("In handleLoadDeckForProps()...");
 		console.log("Received the following deck: ", inputDeck);
 
-		setLoadedDeck(inputDeck);
-		deckContext?.setDeck(inputDeck);
+		const deckStr: IDeckStrings = createStringsFromDeck(inputDeck);
+
+		setRawDeckID(deckStr.idStr);
+		setRawDeckName(deckStr.nameStr);
+		setRawDeckMain(deckStr.mainStr);
+		setRawDeckSB(deckStr.sideboardStr);
 	};
 
 	const handleDeleteDeckForProps = (inputID: string) => {
@@ -321,7 +292,6 @@ export function DeckBuilder(): ReactElement {
 	return (
 		<>
 			<section id="deckBuilder">
-				{/* <br /> */}
 				<button onClick={handleGenerateID}>New ID</button>
 				<form id="decklist-form" onSubmit={handleSaveDeck}>
 					<input //
@@ -356,10 +326,9 @@ export function DeckBuilder(): ReactElement {
 					/>
 					<button type="submit">Save deck</button>
 				</form>
-				{/* <button onClick={handleLoadDeck}>(test)Load example deck</button> */}
 			</section>
 			<section>
-				<SelectDeck onLoadButton={handleLoadDeckForProps} onDeleteButton={handleDeleteDeckForProps} triggerUpdate={triggerUpdate} />
+				<SelectDeck onEditButton={handleLoadDeckForProps} onDeleteButton={handleDeleteDeckForProps} triggerUpdate={triggerUpdate} />
 			</section>
 		</>
 	);

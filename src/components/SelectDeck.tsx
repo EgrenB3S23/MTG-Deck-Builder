@@ -5,7 +5,7 @@ import { DecksContext } from "../context";
 
 interface SelectDeckProps {
 	// decks: IDeck[];
-	onLoadButton: (inputDeck: IDeck) => void;
+	onEditButton: (inputDeck: IDeck) => void;
 	onDeleteButton: (inputID: string) => void;
 	triggerUpdate: boolean;
 }
@@ -13,8 +13,8 @@ interface IOption {
 	value: string; // deck ID
 	label: string; // deck name
 }
-// export function SelectDeck({ decks, onLoadButton }: SelectDeckProps): ReactElement {
-export const SelectDeck: React.FC<SelectDeckProps> = ({ onLoadButton, onDeleteButton, triggerUpdate }) => {
+// export function SelectDeck({ decks, onEditButton }: SelectDeckProps): ReactElement {
+export const SelectDeck: React.FC<SelectDeckProps> = ({ onEditButton, onDeleteButton }) => {
 	// displays a list of saved decks and buttons to load, delete and rename.
 
 	// const {targetID, setTargetID} = useState<string>;
@@ -29,10 +29,7 @@ export const SelectDeck: React.FC<SelectDeckProps> = ({ onLoadButton, onDeleteBu
 	const decksContext = useContext(DecksContext);
 
 	useEffect(() => {
-		console.log("In useEffect([decksContext])");
-
 		const decks = decksContext?.storedDecks;
-		// const decks = getDecksFromLS();
 
 		let deckOptions: IOption[] = [];
 		// convert list of decks into list of IOptions
@@ -42,20 +39,8 @@ export const SelectDeck: React.FC<SelectDeckProps> = ({ onLoadButton, onDeleteBu
 				label: `${deck.name || "(No Name)"} - ID:${deck.id}`,
 			}));
 		}
-
 		setOptions(deckOptions);
-	}, [decksContext]); // runs on mount and when requested by parent component.
-	// useEffect(() => {
-	// 	const decks = getDecksFromLS();
-
-	// 	// convert list of decks into list of IOptions
-	// 	const deckOptions = decks.map((deck: IDeck) => ({
-	// 		value: deck.id,
-	// 		label: `${deck.name || "(No Name)"} - ID:${deck.id}`,
-	// 	}));
-
-	// 	setOptions(deckOptions);
-	// }, [triggerUpdate]); // runs on mount and when requested by parent component.
+	}, [decksContext]);
 
 	useEffect(() => {
 		// update cardCounts when a new deck is clicked in the list.
@@ -63,12 +48,6 @@ export const SelectDeck: React.FC<SelectDeckProps> = ({ onLoadButton, onDeleteBu
 			setTargetDeck(getDeckFromLSByID(selectedOption));
 		}
 	}, [selectedOption]);
-	// useEffect(() => {
-	// 	// update cardCounts when a new deck is clicked in the list.
-	// 	if (selectedOption) {
-	// 		setTargetDeck(getDeckFromLSByID(selectedOption));
-	// 	}
-	// }, [selectedOption]);
 
 	useEffect(() => {
 		// update cardCounts when a new deck is clicked in the list.
@@ -79,17 +58,10 @@ export const SelectDeck: React.FC<SelectDeckProps> = ({ onLoadButton, onDeleteBu
 		}
 	}, [targetDeck]);
 
-	// useEffect(() => {
-	// 	if (targetDeck) {
-	// 		setTargetDeck(getDeckFromLSByID(targetDeck.id));
-	// 	}
-	// }, [triggerUpdate]); // Re-run when triggerUpdate changes (sent by parent component)
-
 	const handleEditButton = () => {
-		console.log("targetDeck: ", targetDeck);
-
 		if (targetDeck) {
-			onLoadButton(targetDeck); // Pass the selected deck up to the parent component
+			console.log("targetDeck: ", targetDeck);
+			onEditButton(targetDeck); // Pass the selected deck up to the parent component
 		}
 	};
 
@@ -112,26 +84,13 @@ export const SelectDeck: React.FC<SelectDeckProps> = ({ onLoadButton, onDeleteBu
 		} else {
 			console.log("No deck selected, nothing to delete.");
 		}
-		// triggerUpdate = !triggerUpdate;
-	};
-
-	const handleTestButton = () => {
-		const msg = getDeckFromLSByID("1729505197787");
-
-		console.log(msg);
 	};
 
 	return (
-		//
 		<>
 			<section className="selectDeck">
 				<div className="selectDeckWrapper">
 					<select name="deckPicker" id="deckPicker" size={20} onChange={(e) => setSelectedOption(e.target.value)}>
-						{/* {decks.map((deck, index) => (
-							<option key={index} value={deck.id}>
-								{deck.name} - ID: {deck.id}
-							</option>
-						))} */}
 						{options.map((option) => (
 							<option key={option.value} value={option.value}>
 								{option.label}
@@ -146,9 +105,6 @@ export const SelectDeck: React.FC<SelectDeckProps> = ({ onLoadButton, onDeleteBu
 						<button onClick={handleDeleteButton} className="btn" id="deleteDeckBtn" value="Delete">
 							Delete
 						</button>
-						{/* <button onClick={handleRenameButton} className="btn" id="deleteDeckBtn" value="Rename">
-							Rename
-						</button> */}
 					</div>
 				</div>
 				<div className="deckDetails">
@@ -176,9 +132,6 @@ export const SelectDeck: React.FC<SelectDeckProps> = ({ onLoadButton, onDeleteBu
 							))}
 							<h2>Sideboard: {cardCounts.sideboard} cards</h2>
 							{targetDeck.sideboard.map((card, index) => (
-								// <p key={index}>
-								// 	{card.count} {card.name}
-								// </p>
 								<p key={index}>
 									{!card.is_real ? (
 										<span>
