@@ -13,6 +13,9 @@ interface IDecksContext {
 	updateDeck: (deck: IDeck) => void;
 	deleteDeck: (id: string) => void;
 
+	//misc
+	createOrUpdateDeck: (deck: IDeck) => void;
+
 	// moving data between context & localStorage:
 	loadDecksFromLSToContext: () => void;
 	saveDecksFromContextToLS: () => void;
@@ -51,6 +54,18 @@ export const DecksProvider /* : React.FC */ = ({ children }: MyProviderProps) =>
 		);
 	};
 
+	const createOrUpdateDeck = (inputDeck: IDeck) => {
+		// if inputDeck's ID matches a stored deck, update the stored deck.
+		// otherwise add it as a new deck.
+		const decks = storedDecks;
+		const foundDeck = decks.find((deck) => deck.id == inputDeck.id);
+		if (foundDeck) {
+			updateDeck(inputDeck);
+		} else {
+			createDeck(inputDeck);
+		}
+	};
+
 	// DELETE
 	const deleteDeck = (id: string) => {
 		setStoredDecks((prevDecks) =>
@@ -87,7 +102,7 @@ export const DecksProvider /* : React.FC */ = ({ children }: MyProviderProps) =>
 	}, []);
 
 	useEffect(() => {
-		console.log("triggered DecksContext useEffect([storedDecks])\nstoredDevks:", storedDecks);
+		console.log("triggered DecksContext useEffect([storedDecks])\nstoredDecks:", storedDecks);
 
 		//whenever storedDecks changes, save to localStorage (unless empty)
 		if (storedDecks) {
@@ -107,6 +122,8 @@ export const DecksProvider /* : React.FC */ = ({ children }: MyProviderProps) =>
 				readDeck,
 				updateDeck,
 				deleteDeck,
+				// misc
+				createOrUpdateDeck,
 				// moving data between context & localStorage:
 				loadDecksFromLSToContext,
 				saveDecksFromContextToLS,

@@ -453,8 +453,9 @@ export function getCardCounts(deck: IDeck) {
 	return { main: mainCount, sideboard: sideboardCount };
 }
 
-export function areAllCardsVerified(inputDeck: IDeck) {
+export function areAllCardsVerified(inputDeck: IDeck | null): boolean {
 	// checks if all cards in deck have been verified.
+	if (!inputDeck) return false;
 	let soFarSoGood: boolean = true;
 
 	for (const card of [...inputDeck.main, ...inputDeck.sideboard]) {

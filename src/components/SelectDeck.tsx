@@ -1,10 +1,10 @@
 import { useContext, useEffect, useState } from "react";
 import { IDeck } from "../interfaces";
 import { deleteDeckInLS, getCardCounts, getDeckFromLSByID, getDecksFromLS } from "../utils";
-// import { DeckContext } from "../context";
+import { DecksContext } from "../context";
 
 interface SelectDeckProps {
-	decks: IDeck[];
+	// decks: IDeck[];
 	onLoadButton: (inputDeck: IDeck) => void;
 	onDeleteButton: (inputID: string) => void;
 	triggerUpdate: boolean;
@@ -14,7 +14,7 @@ interface IOption {
 	label: string; // deck name
 }
 // export function SelectDeck({ decks, onLoadButton }: SelectDeckProps): ReactElement {
-export const SelectDeck: React.FC<SelectDeckProps> = ({ decks, onLoadButton, onDeleteButton, triggerUpdate }) => {
+export const SelectDeck: React.FC<SelectDeckProps> = ({ onLoadButton, onDeleteButton, triggerUpdate }) => {
 	// displays a list of saved decks and buttons to load, delete and rename.
 
 	// const {targetID, setTargetID} = useState<string>;
@@ -26,17 +26,36 @@ export const SelectDeck: React.FC<SelectDeckProps> = ({ decks, onLoadButton, onD
 
 	// const deckContext = useContext(DeckContext);
 
-	useEffect(() => {
-		const decks = getDecksFromLS();
+	const decksContext = useContext(DecksContext);
 
+	useEffect(() => {
+		console.log("In useEffect([decksContext])");
+
+		const decks = decksContext?.storedDecks;
+		// const decks = getDecksFromLS();
+
+		let deckOptions: IOption[] = [];
 		// convert list of decks into list of IOptions
-		const deckOptions = decks.map((deck: IDeck) => ({
-			value: deck.id,
-			label: `${deck.name || "(No Name)"} - ID:${deck.id}`,
-		}));
+		if (decks) {
+			deckOptions = decks.map((deck: IDeck) => ({
+				value: deck.id,
+				label: `${deck.name || "(No Name)"} - ID:${deck.id}`,
+			}));
+		}
 
 		setOptions(deckOptions);
-	}, [triggerUpdate]); // runs on mount and when requested by parent component.
+	}, [decksContext]); // runs on mount and when requested by parent component.
+	// useEffect(() => {
+	// 	const decks = getDecksFromLS();
+
+	// 	// convert list of decks into list of IOptions
+	// 	const deckOptions = decks.map((deck: IDeck) => ({
+	// 		value: deck.id,
+	// 		label: `${deck.name || "(No Name)"} - ID:${deck.id}`,
+	// 	}));
+
+	// 	setOptions(deckOptions);
+	// }, [triggerUpdate]); // runs on mount and when requested by parent component.
 
 	useEffect(() => {
 		// update cardCounts when a new deck is clicked in the list.
@@ -44,6 +63,12 @@ export const SelectDeck: React.FC<SelectDeckProps> = ({ decks, onLoadButton, onD
 			setTargetDeck(getDeckFromLSByID(selectedOption));
 		}
 	}, [selectedOption]);
+	// useEffect(() => {
+	// 	// update cardCounts when a new deck is clicked in the list.
+	// 	if (selectedOption) {
+	// 		setTargetDeck(getDeckFromLSByID(selectedOption));
+	// 	}
+	// }, [selectedOption]);
 
 	useEffect(() => {
 		// update cardCounts when a new deck is clicked in the list.
