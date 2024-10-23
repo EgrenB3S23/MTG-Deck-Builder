@@ -1,7 +1,7 @@
 import { FormEvent, ReactElement, useState, useContext, useEffect } from "react";
-import { IDeck, IDecklistEntry, IDecklistEntryFull, IDeckStrings } from "../interfaces";
-import { arrowFetchCard, baseURL, deleteDeckInLS, dummyDeck, dummyMain, generateUniqueID, getDecksFromLS, saveDeckToLS } from "../utils";
-import { DeckContext } from "../context";
+import { IDeck, IDecklistEntry, IDeckStrings } from "../interfaces";
+import { areAllCardsVerified, arrowFetchCard, createDeckFromStrings, createStringsFromDeck, generateUniqueID } from "../utils";
+import { DecksContext } from "../context";
 import { SelectDeck } from "../components/SelectDeck";
 
 export function DeckBuilder(): ReactElement {
@@ -11,218 +11,42 @@ export function DeckBuilder(): ReactElement {
 	const [rawDeckMain, setRawDeckMain] = useState<string>("");
 	const [rawDeckSB, setRawDeckSB] = useState<string>("");
 
-	// deck state:
-	const [loadedDeck, setLoadedDeck] = useState<IDeck | null>(null);
+	// const [deckStrings, setDeckStrings] = useState<[id: string, name: string, main: string, sideboard: string]>(["", "", "", ""]);
 
-	// hackjob to force-refresh SelectDeck component:
-	const [triggerUpdate, setTriggerUpdate] = useState(false); // Trigger state for updates
+	// const [formStrings, setFormStrings] = useState<IDeckStrings>({ idStr: "", nameStr: "", mainStr: "", sideboardStr: "" });
+
+	// deck shows up here when user wants to save a deck.
+	const [deckToVerify, setDeckToVerify] = useState<IDeck | null>(null);
+
+	// deck shows up here after successful verification.
+	const [deckToStore, setDeckToStore] = useState<IDeck | null>(null);
+
+	// mirror/replacement for localStorage:
+	const decksContext = useContext(DecksContext);
 
 	useEffect(() => {
-		// setup deckID input field on mount to have at the ready when saving deck.
-		setRawDeckID(generateUniqueID);
-	}, []);
+		console.log(`in useEffect(,[deckToVerify])`, deckToVerify);
+
+		if (deckToVerify) {
+			if (areAllCardsVerified(deckToVerify)) {
+				// if here, deck is fully verified.
+				setDeckToStore(deckToVerify);
+				setDeckToVerify(null);
+			} else {
+				// if here, deck needs verifying.
+				verifyAndStoreDeck(deckToVerify); // also nulls deckToVerify when done.
+			}
+		}
+	}, [deckToVerify]);
 
 	useEffect(() => {
-		// setup deckID input field on mount to have at the ready when saving deck.
+		console.log(`in useEffect(,[deckToStore])`, deckToStore);
 
-		if (loadedDeck) {
-			console.log(`loadedDeck changed:`, loadedDeck);
-			const deckStrings = createStringsFromDeckNew(loadedDeck);
-			setRawDeckID(deckStrings.idStr);
-			setRawDeckName(deckStrings.nameStr);
-			setRawDeckMain(deckStrings.mainStr);
-			setRawDeckSB(deckStrings.sideboardStr);
+		if (deckToStore) {
+			decksContext?.createOrUpdateDeck(deckToStore);
 		}
-	}, [loadedDeck]);
-
-	// Save deck to state and localStorage
-	const saveDeck = (newDeck: IDeck) => {
-		setLoadedDeck(newDeck);
-		localStorage.setItem("deckUnckecked", JSON.stringify(newDeck));
-	};
-
-	// load deck from localStorage return deck as IDeck object.
-	// const loadDeck = () => {
-	// 	console.log("in LoadDeck()");
-	// 	const deckFromLocalStorage = localStorage.getItem("deckUnchecked");
-	// 	console.log("deckFromLocalStorage:", deckFromLocalStorage);
-
-	// 	if (deckFromLocalStorage) {
-	// 		const deckToLoad: IDeck = JSON.parse(deckFromLocalStorage);
-	// 		// console.log("JSON.parse(deckFromLocalStorage):", JSON.parse(deckFromLocalStorage));
-	// 		console.log("deckToLoad: (should be identical to previous line)", deckToLoad);
-	// 		return deckToLoad;
-	// 	} else return null;
-	// };
-
-	function toDecklistEntry(input: string): IDecklistEntry | null {
-		// example input: "4 mox opal"
-		// exmple output: {name: "mox opal", count: 4}
-
-		if (input.length === 0) {
-			//data validation
-			return null;
-		}
-
-		// ...extract name and count:
-		const cardCountStr = input.split(" ", 1)[0]; // '4 mox opal' -> '4'
-		const cardNameStr = input.slice(cardCountStr.length + 1); // '4 mox opal' -> 'mox opal'
-		const decklistEntry = {
-			name: cardNameStr,
-			count: parseInt(cardCountStr),
-		};
-		// console.log("decklistEntry", decklistEntry);
-
-		if (
-			// more data validation (for culling invalid decklist entries)
-			decklistEntry.name.length == 0 ||
-			decklistEntry.count == 0 ||
-			Number.isNaN(decklistEntry.count)
-		) {
-			return null;
-		}
-		return decklistEntry; // format: {name: "Mox Opal", count: 4}
-	}
-
-	function createStringsFromDeckNew(input: IDeck): IDeckStrings {
-		console.log("in createStringsFromDeck...");
-		console.log("input.ID", input.id);
-		console.log("input.name", input.name);
-		console.log("input.main", input.main);
-		console.log("input.sideboard", input.sideboard);
-
-		// todo 241015
-		// input: an IDeck object.
-		// output: array of 3 strings formatted as intended for the 3 decklist form textboxes.
-		// example input:
-		/*
-		{
-			name: "Hello deck!",
-			main: [
-				{name: "Mox opal", count: 4},
-				{name: "Mox lotus", count: 4}
-			],
-			sideboard: [
-				{name: "Mox opal", count: 4},
-				{name: "Mox lotus", count: 4}
-			]
-		}
-		*/
-		// example output:
-		/* 
-		[
-			"Hello deck!",
-			"4 Mox opal\n4 Mox lotus",
-			"4 Mox opal\n4 Mox lotus",
-		]
-		*/
-
-		const idStrOutput = input.id ? input.id : generateUniqueID();
-		const nameStrOutput = input.name;
-		let mainStrOutput = "";
-		let sideboardStrOutput = "";
-
-		for (const entry of input.main) {
-			mainStrOutput = `${mainStrOutput}\n${entry.count} ${entry.name}`;
-		}
-
-		for (const entry of input.sideboard) {
-			sideboardStrOutput = `${sideboardStrOutput}\n${entry.count} ${entry.name}`;
-		}
-
-		console.log("nameStrOutput trim:", idStrOutput);
-		console.log("nameStrOutput trim:", nameStrOutput);
-		console.log("mainStrOutput trim:", mainStrOutput);
-		console.log("sideboardStrOutput trim:", sideboardStrOutput);
-
-		return {
-			idStr: idStrOutput.trim(),
-			nameStr: nameStrOutput.trim(),
-			mainStr: mainStrOutput.trim(),
-			sideboardStr: sideboardStrOutput.trim(),
-		};
-		// return [nameStr.trim(), mainStr.trim(), sideboardStr.trim()];
-	}
-
-	function createStringsFromDeck(input: IDeck): [string, string, string] {
-		console.log("in createStringsFromDeck...");
-		console.log("input.name", input.name);
-		console.log("input.main", input.main);
-		console.log("input.sideboard", input.sideboard);
-
-		// todo 241015
-		// input: an IDeck object.
-		// output: array of 3 strings formatted as intended for the 3 decklist form textboxes.
-		// example input:
-
-		const nameStr = input.name;
-		let mainStr = "";
-		let sideboardStr = "";
-
-		for (const entry of input.main) {
-			mainStr = `${mainStr}\n${entry.count} ${entry.name}`;
-		}
-
-		for (const entry of input.sideboard) {
-			sideboardStr = `${sideboardStr}\n${entry.count} ${entry.name}`;
-		}
-
-		console.log("nameStr trim:", nameStr);
-		console.log("mainStr trim:", mainStr);
-		console.log("sideboardStr trim:", sideboardStr);
-
-		return [nameStr.trim(), mainStr.trim(), sideboardStr.trim()];
-	}
-
-	function createDeckFromStrings(inputID: string, inputName: string, inputMain: string, inputSB: string): IDeck {
-		// 241014 TODO
-		// 1. turn strings into arrays of lines
-		// 2. for main: turn each line into decklistEntry
-		// 3. for sb: turn each line into decklistEntry
-		// 4. combine name, main, sb into IDeck object.
-		// 5. return IDeck object
-
-		if (!inputID) {
-			inputID = generateUniqueID();
-		}
-
-		// 1. turn strings into arrays of lines
-		let linesMain: string[] = inputMain.split("\n");
-		let linesSB: string[] = inputSB.split("\n");
-
-		// 2. for main: turn each line into decklistEntry
-		let deckMain: IDecklistEntry[] = [];
-		for (const line of linesMain) {
-			let entry: IDecklistEntry | null = toDecklistEntry(line);
-			console.log("Maindeck entry:", entry);
-			//add entry to list if entry is a valid decklistEntry (not null)
-			if (entry !== null) {
-				deckMain.push(entry);
-			}
-		}
-
-		// 3. for sb: turn each line into decklistEntry
-		let deckSB: IDecklistEntry[] = [];
-		for (const line of linesSB) {
-			let entry: IDecklistEntry | null = toDecklistEntry(line);
-			console.log("SB entry:", entry);
-			//add entry to list if entry is a valid decklistEntry (not null)
-			if (entry !== null) {
-				deckSB.push(entry);
-			}
-		}
-
-		console.log("deckName: ", inputName);
-		console.log("deckMain: ", deckMain);
-		console.log("deckSB: ", deckSB);
-
-		return {
-			id: inputID,
-			name: inputName,
-			main: deckMain,
-			sideboard: deckSB,
-		};
-	}
+		setDeckToStore(null);
+	}, [deckToStore]);
 
 	async function batchCheck(input: IDecklistEntry[]) {
 		// todo 241015: replace batchCheckOld with this.
@@ -233,11 +57,7 @@ export function DeckBuilder(): ReactElement {
 		// 4.1. add card info
 		// 4.2. add "is_real" flag
 		// 4.3. replace name with corrected name ("moxopal"-> "Mox Opal")
-
-		// const [...cardNames] = input.name;
-		// const data = await Promise.all(cardNames.map(arrowFetchCard));
-
-		// const start = new Date().getTime(); // start timer to measure function performance
+		// 5. return cards with the new data added.
 
 		const retVal = input;
 		const data = await Promise.all(input.map((entry) => arrowFetchCard(entry.name))); // "for each card in list, fetch card info."
@@ -255,11 +75,25 @@ export function DeckBuilder(): ReactElement {
 		return retVal;
 	}
 
+	async function verifyAndStoreDeck(deckIn: IDeck) {
+		// fetches cards and verifies card names.
+		// then stores
+		// called by useEffect(,[deckToVerify])
+		console.log("in verifyAndStoreDeck()", deckIn);
+
+		const deckChecked = await deckCheck(deckIn);
+		if (areAllCardsVerified(deckChecked)) {
+			setDeckToStore(deckChecked);
+		} else {
+			console.warn(`deck verification failed. check spelling. Deck: `, deckIn);
+		}
+		setDeckToVerify(null);
+	}
+
 	async function deckCheck(deckIn: IDeck) {
 		// fetches cards info for provided deck and verifies each card (sets flag is_real to true/false)
 
 		console.log(`in deckCheck()`);
-		const start = new Date().getTime(); // start timer to measure function performance
 
 		let deckOut: IDeck = deckIn;
 
@@ -269,213 +103,50 @@ export function DeckBuilder(): ReactElement {
 
 			deckOut.main = checkedMain;
 			deckOut.sideboard = checkedSideboard;
-
-			// todo 241021
-			// deckContext?.setId(deckIn.id);
-			// deckContext?.setName(deckIn.name);
-			// deckContext?.setDeckMain(checkedMain);
-			// deckContext?.setDeckSideboard(checkedSideboard);
 		}
 
-		let elapsed = new Date().getTime() - start; // end timer
-		console.log(`deckCheck() finished. Time elapsed: ${elapsed} ms.`);
-		// let deckVerified =
-		// {...deckIn,
-		// 	main: checkedMain,
-		// 	sideb
-		// };
+		if (areAllCardsVerified(deckOut)) {
+			console.log("All cards verified!");
+		}
+
 		return deckOut;
 	}
 
-	// const handleSaveDeck = (e: FormEvent<HTMLFormElement>) => {
-	// 	// todo 241014
-
-	// 	// 1. convert textbox data into deck (IDeck) object.
-	// 	// 2. save deck object to Local Storage
-	// 	// 3. TODO: fetch & save card info to each card in decklist (and set is_real = true | false)
-
-	// 	// ¤ intended process: (TODO as of 241016)
-	// 	// >	handleSaveDeck()
-	// 	// >>		deckCheck(deck: IDeck)						return format: IDeck
-	// 	// >>>			batchCheck(maindeck: IDecklistEntry[])	return format: IDecklistEntry[] w/ card_info
-	// 	// >>>			batchCheck(sideboard: IDecklistEntry[])	return format: IDecklistEntry[] w/ card_info
-	// 	// >>>>				arrowFetchCard(card name: string)		done. return format: <ICard | null>
-
-	// 	e.preventDefault();
-
-	// 	console.log("");
-	// 	console.log("### in handleSaveDeck...");
-	// 	// get a complete deck object from textbox strings:
-	// 	let deckUnchecked: IDeck = createDeckFromStrings(rawDeckID, rawDeckName, rawDeckMain, rawDeckSB);
-	// 	console.log("deckUnchecked: ", deckUnchecked);
-	// 	console.log("deck state before setDeck: ", loadedDeck);
-
-	// 	setLoadedDeck(deckUnchecked);
-	// 	console.log("deck state after setDeck: ", loadedDeck);
-	// 	localStorage.setItem("deckUnchecked", JSON.stringify(deckUnchecked));
-
-	// 	// TODO 241021: check deck, then only save if deck passes some checks
-
-	// 	const start = new Date().getTime(); // start timer to measure function performance
-	// 	console.log("starting timer in handleSaveDeck before deckCheck()...");
-	// 	console.log("deck before deckCheck:", loadedDeck);
-	// 	deckCheck(deckUnchecked!) //
-	// 		.then(() => console.log("deckUnchecked after deckCheck:", deckUnchecked))
-	// 		.then(() => localStorage.setItem("deckUnchecked", JSON.stringify(deckUnchecked)))
-	// 		.then(() => console.log("deck LS after deckCheck AFTER setItem:", JSON.parse(localStorage.getItem("deckUnchecked") || "NULL DECK OMG")));
-
-	// 	let elapsed = new Date().getTime() - start; // end timer
-	// 	console.log(`deckCheck() from handleSaveDeck finished. Time elapsed: ${elapsed} ms.`);
-	// };
-
-	// const handleLookup = async (cardName: string) => {
-	// 	//old:  const resp = await parseCardName(cname);
-	// 	const resp = await arrowFetchCard(cardName);
-
-	// 	console.log(`running handleLookup("${cardName}")...`);
-	// 	let alertMsg: string = "";
-	// 	if (resp) {
-	// 		if (resp.object === "card") {
-	// 			alertMsg = `${resp.name} is a valid card!`;
-	// 		} else {
-	// 			alertMsg = `Card name "${cardName}" does not exist!`;
-	// 		}
-	// 	}
-	// 	console.log(alertMsg);
-	// 	alert(alertMsg);
-	// };
-
-	// const handleLoadDeckForProps = (inputDeck: IDeck) => {
-	// 	console.log("in handleLoadDeckForProps()...");
-	// 	setLoadedDeck(inputDeck);
-	// 	console.log("inputDeck: ", inputDeck);
-	// 	console.log("loadedDeck: ", loadedDeck);
-	// };
-
-	const handleSaveDeck = (e: FormEvent<HTMLFormElement>) => {
-		// todo 241014
-
-		// 1. convert textbox data into deck (IDeck) object.
-		// 2. save deck object to Local Storage
-		// 3. TODO: fetch & save card info to each card in decklist (and set is_real = true | false)
-
-		// ¤ intended process: (TODO as of 241016)
-		// >	handleSaveDeck()
-		// >>		deckCheck(deck: IDeck)						return format: IDeck
-		// >>>			batchCheck(maindeck: IDecklistEntry[])	return format: IDecklistEntry[] w/ card_info
-		// >>>			batchCheck(sideboard: IDecklistEntry[])	return format: IDecklistEntry[] w/ card_info
-		// >>>>				arrowFetchCard(card name: string)		done. return format: <ICard | null>
-
-		e.preventDefault();
-
-		console.log("");
-		console.log("### in handleSaveDeck...");
-		// get a complete deck object from textbox strings:
-		let deckUnchecked: IDeck = createDeckFromStrings(rawDeckID, rawDeckName, rawDeckMain, rawDeckSB);
-		console.log("deckUnchecked: ", deckUnchecked);
-		console.log("deck state before setDeck: ", loadedDeck);
-
-		setLoadedDeck(deckUnchecked);
-		// localStorage.setItem("deckUnchecked", JSON.stringify(deckUnchecked));
-		// TODO 241021: check deck, then only save if deck passes some checks
-
-		const start = new Date().getTime(); // start timer to measure function performance
-		console.log("starting timer in handleSaveDeck before deckCheck()...");
-		console.log("deck before deckCheck:", loadedDeck);
-		deckCheck(deckUnchecked!) //
-			.then(() => console.log("deckUnchecked after deckCheck:", deckUnchecked))
-			.then(() => localStorage.setItem("deckUnchecked", JSON.stringify(deckUnchecked)))
-			.then(() => console.log("deck LS after deckCheck AFTER setItem:", JSON.parse(localStorage.getItem("deckUnchecked") || "NULL DECK OMG")))
-			.then(() => saveDeckToLS(deckUnchecked))
-			.then(() => setTriggerUpdate(!triggerUpdate));
-
-		let elapsed = new Date().getTime() - start; // end timer
-		console.log(`deckCheck() from handleSaveDeck finished. Time elapsed: ${elapsed} ms.`);
-
-		// forceRefresh SelectDeck:
-		console.warn("triggerUpdate before: ", triggerUpdate);
-		// setTriggerUpdate(!triggerUpdate); // toggle the trigger state to force re-render
-		// console.warn("triggerUpdate after: ", triggerUpdate);
+	const handleGenerateID = () => {
+		// const newID = generateUniqueID();
+		setRawDeckID(generateUniqueID());
 	};
 
-	const handleLookup = async (cardName: string) => {
-		//old:  const resp = await parseCardName(cname);
-		const resp = await arrowFetchCard(cardName);
+	const handleSaveDeck = (e: FormEvent<HTMLFormElement>) => {
+		// take raws -> deck Object.
+		// setDeckToVerify(deck);
+		// ...triggering useEffect([deckToVerify])
+		// (this triggers verification, and if verified,)
+		e.preventDefault();
+		console.log("");
+		console.log("### in handleSaveDeck...");
 
-		console.log(`running handleLookup("${cardName}")...`);
-		let alertMsg: string = "";
-		if (resp) {
-			if (resp.object === "card") {
-				alertMsg = `${resp.name} is a valid card!`;
-			} else {
-				alertMsg = `Card name "${cardName}" does not exist!`;
-			}
-		}
-		console.log(alertMsg);
-		alert(alertMsg);
+		const deckBeforeCheck: IDeck = createDeckFromStrings(rawDeckID, rawDeckName, rawDeckMain, rawDeckSB);
+
+		setDeckToVerify(deckBeforeCheck);
 	};
 
 	const handleLoadDeckForProps = (inputDeck: IDeck) => {
-		console.log("in handleLoadDeckForProps()...");
-		setLoadedDeck(inputDeck);
-		console.log("inputDeck: ", inputDeck);
-		console.log("loadedDeck: ", loadedDeck);
+		console.log("In handleLoadDeckForProps()...");
+		console.log("Received the following deck: ", inputDeck);
+
+		const deckStr: IDeckStrings = createStringsFromDeck(inputDeck);
+
+		setRawDeckID(deckStr.idStr);
+		setRawDeckName(deckStr.nameStr);
+		setRawDeckMain(deckStr.mainStr);
+		setRawDeckSB(deckStr.sideboardStr);
 	};
-
-	const handleDeleteDeckForProps = (inputID: string) => {
-		console.log("in handleDeleteDeckForProps()...");
-		deleteDeckInLS(inputID);
-		setTriggerUpdate(!triggerUpdate);
-	};
-
-	// const handleLoadDeck = () => {
-	// 	// todo 241014
-	// 	// 1. load IDeck object from localStorage
-	// 	// 2. save the IDeckobject with setDeck()
-	// 	// 3. convert IDeck object to raw decklist strings and send those to decklist form textboxes)
-
-	// 	console.log("handleLoadDeck(): ");
-
-	// 	// 1. load IDeck object from localStorage
-	// 	const deckToLoad = loadDeck(); // IDeck object (or null if error)
-	// 	console.log("deckToLoad: ", deckToLoad);
-
-	// 	// 2. save the IDeckobject with setDeck()
-	// 	if (deckToLoad !== null) {
-	// 		setLoadedDeck({
-	// 			// save deck object to state
-	// 			id: deckToLoad.id,
-	// 			name: deckToLoad.name,
-	// 			main: deckToLoad.main,
-	// 			sideboard: deckToLoad.sideboard,
-	// 		});
-
-	// 		// 3. set raws
-
-	// 		const stringsObj = createStringsFromDeckNew(deckToLoad);
-	// 		const rawIDStr = stringsObj.idStr;
-	// 		const rawNameStr = stringsObj.nameStr;
-	// 		const rawMainStr = stringsObj.mainStr;
-	// 		const rawSideboardStr = stringsObj.sideboardStr;
-
-	// 		setRawDeckID(rawIDStr);
-	// 		setRawDeckName(rawNameStr);
-	// 		setRawDeckMain(rawMainStr);
-	// 		setRawDeckSB(rawSideboardStr);
-	// 		console.log("rawIDStr: ", rawIDStr);
-	// 		console.log("rawNameStr: ", rawNameStr);
-	// 		console.log("rawMainStr: ", rawMainStr);
-	// 		console.log("rawSideboardStr: ", rawSideboardStr);
-	// 		setTriggerUpdate(!triggerUpdate);
-	// 	}
-	// };
 
 	return (
 		<>
 			<section id="deckBuilder">
-				<br />
-				{/* <input type="text" id="searchtext" /> */}
-				<br />
+				<button onClick={handleGenerateID}>New ID</button>
 				<form id="decklist-form" onSubmit={handleSaveDeck}>
 					<input //
 						name="deckID"
@@ -509,10 +180,9 @@ export function DeckBuilder(): ReactElement {
 					/>
 					<button type="submit">Save deck</button>
 				</form>
-				{/* <button onClick={handleLoadDeck}>(test)Load example deck</button> */}
 			</section>
 			<section>
-				<SelectDeck decks={getDecksFromLS()} onLoadButton={handleLoadDeckForProps} onDeleteButton={handleDeleteDeckForProps} triggerUpdate={triggerUpdate} />
+				<SelectDeck onEditButton={handleLoadDeckForProps} /* setIDStr={setRawDeckID} setNameStr={setRawDeckName} setMainStr={setRawDeckMain} setSideboardStr={setRawDeckSB} */ />
 			</section>
 		</>
 	);
