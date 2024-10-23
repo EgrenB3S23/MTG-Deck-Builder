@@ -39,14 +39,14 @@ export function DeckBuilder(): ReactElement {
 
 		if (loadedDeck) {
 			console.log(`loadedDeck changed:`, loadedDeck);
-			const deckStrings = createStringsFromDeckNew(loadedDeck);
+			const deckStrings = createStringsFromDeck(loadedDeck);
 			setRawDeckID(deckStrings.idStr);
 			setRawDeckName(deckStrings.nameStr);
 			setRawDeckMain(deckStrings.mainStr);
 			setRawDeckSB(deckStrings.sideboardStr);
 		} else {
 			// if loadedDeck is null,
-			setRawDeckID(generateUniqueID);
+			setRawDeckID(generateUniqueID());
 			setRawDeckName("");
 			setRawDeckMain("");
 			setRawDeckSB("");
@@ -78,12 +78,6 @@ export function DeckBuilder(): ReactElement {
 		setDeckToStore(null);
 	}, [deckToStore]);
 
-	// Save deck to state and localStorage
-	// const saveDeck = (newDeck: IDeck) => {
-	// 	setLoadedDeck(newDeck);
-	// 	localStorage.setItem("deckUnckecked", JSON.stringify(newDeck));
-	// };
-
 	function toDecklistEntry(input: string): IDecklistEntry | null {
 		// example input: "4 mox opal"
 		// exmple output: {name: "mox opal", count: 4}
@@ -113,16 +107,15 @@ export function DeckBuilder(): ReactElement {
 		return decklistEntry; // format: {name: "Mox Opal", count: 4}
 	}
 
-	function createStringsFromDeckNew(input: IDeck): IDeckStrings {
+	function createStringsFromDeck(input: IDeck): IDeckStrings {
 		console.log("in createStringsFromDeck...");
 		console.log("input.ID", input.id);
 		console.log("input.name", input.name);
 		console.log("input.main", input.main);
 		console.log("input.sideboard", input.sideboard);
 
-		// todo 241015
 		// input: an IDeck object.
-		// output: array of 3 strings formatted as intended for the 3 decklist form textboxes.
+		// output: object with 4 strings formatted as intended for the 4 decklist form textboxes.
 		// example input:
 		/*
 		{
@@ -210,9 +203,10 @@ export function DeckBuilder(): ReactElement {
 			}
 		}
 
-		console.log("deckName: ", inputName);
-		console.log("deckMain: ", deckMain);
-		console.log("deckSB: ", deckSB);
+		console.log("deck ID: ", inputID);
+		console.log("deck Name: ", inputName);
+		console.log("deck Main: ", deckMain);
+		console.log("deck SB: ", deckSB);
 
 		return {
 			id: inputID,
@@ -231,11 +225,7 @@ export function DeckBuilder(): ReactElement {
 		// 4.1. add card info
 		// 4.2. add "is_real" flag
 		// 4.3. replace name with corrected name ("moxopal"-> "Mox Opal")
-
-		// const [...cardNames] = input.name;
-		// const data = await Promise.all(cardNames.map(arrowFetchCard));
-
-		// const start = new Date().getTime(); // start timer to measure function performance
+		// 5. return cards with the new data added.
 
 		const retVal = input;
 		const data = await Promise.all(input.map((entry) => arrowFetchCard(entry.name))); // "for each card in list, fetch card info."
@@ -286,23 +276,24 @@ export function DeckBuilder(): ReactElement {
 
 		if (areAllCardsVerified(deckOut)) {
 			console.log("All cards verified!");
-
-			// setLoadedDeck<(deckOut);
 		}
 
 		return deckOut;
 	}
 
-	async function verifyDeck(deckIn: IDeck) {}
+	const handleGenerateID = () => {
+		// const newID = generateUniqueID();
+		setRawDeckID(generateUniqueID());
+	};
 
-	const handleSaveDeckNew = (e: FormEvent<HTMLFormElement>) => {
+	const handleSaveDeck = (e: FormEvent<HTMLFormElement>) => {
 		// take raws -> deck Object.
 		// setDeckToVerify(deck);
 		// ...triggering useEffect([deckToVerify])
 		// (this triggers verification, and if verified,)
 		e.preventDefault();
 		console.log("");
-		console.log("### in handleSaveDeckNew...");
+		console.log("### in handleSaveDeck...");
 
 		const deckBeforeCheck: IDeck = createDeckFromStrings(rawDeckID, rawDeckName, rawDeckMain, rawDeckSB);
 
@@ -327,55 +318,12 @@ export function DeckBuilder(): ReactElement {
 		setTriggerUpdate(!triggerUpdate);
 	};
 
-	// const handleLoadDeck = () => {
-	// 	// todo 241014
-	// 	// 1. load IDeck object from localStorage
-	// 	// 2. save the IDeckobject with setDeck()
-	// 	// 3. convert IDeck object to raw decklist strings and send those to decklist form textboxes)
-
-	// 	console.log("handleLoadDeck(): ");
-
-	// 	// 1. load IDeck object from localStorage
-	// 	const deckToLoad = loadDeck(); // IDeck object (or null if error)
-	// 	console.log("deckToLoad: ", deckToLoad);
-
-	// 	// 2. save the IDeckobject with setDeck()
-	// 	if (deckToLoad !== null) {
-	// 		setLoadedDeck({
-	// 			// save deck object to state
-	// 			id: deckToLoad.id,
-	// 			name: deckToLoad.name,
-	// 			main: deckToLoad.main,
-	// 			sideboard: deckToLoad.sideboard,
-	// 		});
-
-	// 		// 3. set raws
-
-	// 		const stringsObj = createStringsFromDeckNew(deckToLoad);
-	// 		const rawIDStr = stringsObj.idStr;
-	// 		const rawNameStr = stringsObj.nameStr;
-	// 		const rawMainStr = stringsObj.mainStr;
-	// 		const rawSideboardStr = stringsObj.sideboardStr;
-
-	// 		setRawDeckID(rawIDStr);
-	// 		setRawDeckName(rawNameStr);
-	// 		setRawDeckMain(rawMainStr);
-	// 		setRawDeckSB(rawSideboardStr);
-	// 		console.log("rawIDStr: ", rawIDStr);
-	// 		console.log("rawNameStr: ", rawNameStr);
-	// 		console.log("rawMainStr: ", rawMainStr);
-	// 		console.log("rawSideboardStr: ", rawSideboardStr);
-	// 		setTriggerUpdate(!triggerUpdate);
-	// 	}
-	// };
-
 	return (
 		<>
 			<section id="deckBuilder">
-				<br />
-				{/* <input type="text" id="searchtext" /> */}
-				<br />
-				<form id="decklist-form" onSubmit={handleSaveDeckNew}>
+				{/* <br /> */}
+				<button onClick={handleGenerateID}>New ID</button>
+				<form id="decklist-form" onSubmit={handleSaveDeck}>
 					<input //
 						name="deckID"
 						id="deckID"
