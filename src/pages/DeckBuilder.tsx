@@ -1,7 +1,7 @@
 import { FormEvent, ReactElement, useState, useContext, useEffect } from "react";
 import { IDeck, IDecklistEntry, IDeckStrings } from "../interfaces";
-import { areAllCardsVerified, arrowFetchCard, deleteDeckInLS, generateUniqueID, getDecksFromLS, saveDeckToLS } from "../utils";
-import { DeckContext, DecksContext } from "../context";
+import { areAllCardsVerified, arrowFetchCard, createDeckFromStrings, createStringsFromDeck, generateUniqueID } from "../utils";
+import { DecksContext } from "../context";
 import { SelectDeck } from "../components/SelectDeck";
 
 export function DeckBuilder(): ReactElement {
@@ -11,20 +11,18 @@ export function DeckBuilder(): ReactElement {
 	const [rawDeckMain, setRawDeckMain] = useState<string>("");
 	const [rawDeckSB, setRawDeckSB] = useState<string>("");
 
+	// const [deckStrings, setDeckStrings] = useState<[id: string, name: string, main: string, sideboard: string]>(["", "", "", ""]);
+
+	// const [formStrings, setFormStrings] = useState<IDeckStrings>({ idStr: "", nameStr: "", mainStr: "", sideboardStr: "" });
+
 	// deck shows up here when user wants to save a deck.
 	const [deckToVerify, setDeckToVerify] = useState<IDeck | null>(null);
 
 	// deck shows up here after successful verification.
 	const [deckToStore, setDeckToStore] = useState<IDeck | null>(null);
 
-	// store a deck for use across any future tools that needs a decklist (such as goldfishing simulator)
-	// const deckContext = useContext(DeckContext);
-
 	// mirror/replacement for localStorage:
 	const decksContext = useContext(DecksContext);
-
-	// hackjob to force-refresh SelectDeck component:
-	const [triggerUpdate, setTriggerUpdate] = useState(false); // Trigger state for updates
 
 	useEffect(() => {
 		console.log(`in useEffect(,[deckToVerify])`, deckToVerify);
@@ -49,144 +47,6 @@ export function DeckBuilder(): ReactElement {
 		}
 		setDeckToStore(null);
 	}, [deckToStore]);
-
-	function toDecklistEntry(input: string): IDecklistEntry | null {
-		// example input: "4 mox opal"
-		// exmple output: {name: "mox opal", count: 4}
-
-		if (input.length === 0) {
-			//data validation
-			return null;
-		}
-
-		// ...extract name and count:
-		const cardCountStr = input.split(" ", 1)[0]; // '4 mox opal' -> '4'
-		const cardNameStr = input.slice(cardCountStr.length + 1); // '4 mox opal' -> 'mox opal'
-		const decklistEntry = {
-			name: cardNameStr,
-			count: parseInt(cardCountStr),
-		};
-		// console.log("decklistEntry", decklistEntry);
-
-		if (
-			// more data validation (for culling invalid decklist entries)
-			decklistEntry.name.length == 0 ||
-			decklistEntry.count == 0 ||
-			Number.isNaN(decklistEntry.count)
-		) {
-			return null;
-		}
-		return decklistEntry; // format: {name: "Mox Opal", count: 4}
-	}
-
-	function createStringsFromDeck(input: IDeck): IDeckStrings {
-		console.log("in createStringsFromDeck...");
-		console.log("input.ID", input.id);
-		console.log("input.name", input.name);
-		console.log("input.main", input.main);
-		console.log("input.sideboard", input.sideboard);
-
-		// input: an IDeck object.
-		// output: object with 4 strings formatted as intended for the 4 decklist form textboxes.
-		// example input:
-		/*
-		{
-			name: "Hello deck!",
-			main: [
-				{name: "Mox opal", count: 4},
-				{name: "Mox lotus", count: 4}
-			],
-			sideboard: [
-				{name: "Mox opal", count: 4},
-				{name: "Mox lotus", count: 4}
-			]
-		}
-		*/
-		// example output:
-		/* 
-		[
-			"Hello deck!",
-			"4 Mox opal\n4 Mox lotus",
-			"4 Mox opal\n4 Mox lotus",
-		]
-		*/
-
-		const idStrOutput = input.id ? input.id : generateUniqueID();
-		const nameStrOutput = input.name;
-		let mainStrOutput = "";
-		let sideboardStrOutput = "";
-
-		for (const entry of input.main) {
-			mainStrOutput = `${mainStrOutput}\n${entry.count} ${entry.name}`;
-		}
-
-		for (const entry of input.sideboard) {
-			sideboardStrOutput = `${sideboardStrOutput}\n${entry.count} ${entry.name}`;
-		}
-
-		console.log("idStrOutput trim:", idStrOutput);
-		console.log("nameStrOutput trim:", nameStrOutput);
-		console.log("mainStrOutput trim:", mainStrOutput);
-		console.log("sideboardStrOutput trim:", sideboardStrOutput);
-
-		return {
-			idStr: idStrOutput.trim(),
-			nameStr: nameStrOutput.trim(),
-			mainStr: mainStrOutput.trim(),
-			sideboardStr: sideboardStrOutput.trim(),
-		};
-	}
-
-	function createDeckFromStrings(inputID: string, inputName: string, inputMain: string, inputSB: string): IDeck {
-		// 241014 TODO
-		// 1. turn strings into arrays of lines
-		// 2. for main: turn each line into decklistEntry
-		// 3. for sb: turn each line into decklistEntry
-		// 4. combine name, main, sb into IDeck object.
-		// 5. return IDeck object
-
-		if (!inputID) {
-			inputID = generateUniqueID();
-		}
-
-		// 1. turn strings into arrays of lines
-		let linesMain: string[] = inputMain.split("\n");
-		let linesSB: string[] = inputSB.split("\n");
-
-		// 2. for main: turn each line into decklistEntry
-		let deckMain: IDecklistEntry[] = [];
-		for (const line of linesMain) {
-			let entry: IDecklistEntry | null = toDecklistEntry(line);
-			console.log("Maindeck entry:", entry);
-			//add entry to list if entry is a valid decklistEntry (not null)
-			if (entry !== null) {
-				deckMain.push(entry);
-			}
-		}
-
-		// 3. for sb: turn each line into decklistEntry
-		let deckSB: IDecklistEntry[] = [];
-		for (const line of linesSB) {
-			let entry: IDecklistEntry | null = toDecklistEntry(line);
-			console.log("SB entry:", entry);
-			//add entry to list if entry is a valid decklistEntry (not null)
-			if (entry !== null) {
-				deckSB.push(entry);
-			}
-		}
-
-		console.log("deck ID: ", inputID);
-		console.log("deck Name: ", inputName);
-		console.log("deck Main: ", deckMain);
-		console.log("deck SB: ", deckSB);
-
-		return {
-			id: inputID,
-			name: inputName,
-			main: deckMain,
-			sideboard: deckSB,
-		};
-	}
 
 	async function batchCheck(input: IDecklistEntry[]) {
 		// todo 241015: replace batchCheckOld with this.
@@ -283,12 +143,6 @@ export function DeckBuilder(): ReactElement {
 		setRawDeckSB(deckStr.sideboardStr);
 	};
 
-	const handleDeleteDeckForProps = (inputID: string) => {
-		console.log("in handleDeleteDeckForProps()...");
-		deleteDeckInLS(inputID);
-		setTriggerUpdate(!triggerUpdate);
-	};
-
 	return (
 		<>
 			<section id="deckBuilder">
@@ -328,7 +182,7 @@ export function DeckBuilder(): ReactElement {
 				</form>
 			</section>
 			<section>
-				<SelectDeck onEditButton={handleLoadDeckForProps} onDeleteButton={handleDeleteDeckForProps} triggerUpdate={triggerUpdate} />
+				<SelectDeck onEditButton={handleLoadDeckForProps} /* setIDStr={setRawDeckID} setNameStr={setRawDeckName} setMainStr={setRawDeckMain} setSideboardStr={setRawDeckSB} */ />
 			</section>
 		</>
 	);

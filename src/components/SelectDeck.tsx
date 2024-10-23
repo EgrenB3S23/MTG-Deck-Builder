@@ -1,30 +1,31 @@
 import { useContext, useEffect, useState } from "react";
 import { IDeck } from "../interfaces";
-import { deleteDeckInLS, getCardCounts, getDeckFromLSByID, getDecksFromLS } from "../utils";
-import { DecksContext } from "../context";
+import { deleteDeckInLS, getCardCounts, getDecksFromLS } from "../utils";
+import { DeckContext, DecksContext } from "../context";
 
 interface SelectDeckProps {
-	// decks: IDeck[];
 	onEditButton: (inputDeck: IDeck) => void;
-	onDeleteButton: (inputID: string) => void;
-	triggerUpdate: boolean;
+	// setIDStr?: React.Dispatch<React.SetStateAction<string>>;
+	// setNameStr?: React.Dispatch<React.SetStateAction<string>>;
+	// setMainStr?: React.Dispatch<React.SetStateAction<string>>;
+	// setSideboardStr?: React.Dispatch<React.SetStateAction<string>>;
 }
 interface IOption {
 	value: string; // deck ID
 	label: string; // deck name
 }
 // export function SelectDeck({ decks, onEditButton }: SelectDeckProps): ReactElement {
-export const SelectDeck: React.FC<SelectDeckProps> = ({ onEditButton, onDeleteButton }) => {
+export const SelectDeck: React.FC<SelectDeckProps> = ({ onEditButton /* setIDStr, setNameStr, setMainStr, setSideboardStr */ }) => {
 	// displays a list of saved decks and buttons to load, delete and rename.
 
 	// const {targetID, setTargetID} = useState<string>;
 	const [targetDeck, setTargetDeck] = useState<IDeck | null>(null); // contains the deck that is currently selected in the <select> element
 	const [options, setOptions] = useState<IOption[]>([]); // contais the list elements for <select>.
-	const [selectedOption, setSelectedOption] = useState<string>(""); // contains the value field for the selected <option> under <select>
+	const [selectedOption, setSelectedOption] = useState<string>(""); // contains the value field (a deck ID) for the selected <option> under <select>
 
 	const [cardCounts, setCardCounts] = useState<{ main: number; sideboard: number }>({ main: 0, sideboard: 0 }); // contains the number of cards in maindeck and sideboard of targetDeck.
 
-	// const deckContext = useContext(DeckContext);
+	const deckContext = useContext(DeckContext);
 
 	const decksContext = useContext(DecksContext);
 
@@ -43,9 +44,12 @@ export const SelectDeck: React.FC<SelectDeckProps> = ({ onEditButton, onDeleteBu
 	}, [decksContext]);
 
 	useEffect(() => {
-		// update cardCounts when a new deck is clicked in the list.
+		// set targetDeck when a new deck is selected from the list.
 		if (selectedOption) {
-			setTargetDeck(getDeckFromLSByID(selectedOption));
+			if (decksContext?.storedDecks) {
+				const newTargetDeck = decksContext?.readDeck(selectedOption);
+				setTargetDeck(newTargetDeck);
+			}
 		}
 	}, [selectedOption]);
 
@@ -85,6 +89,12 @@ export const SelectDeck: React.FC<SelectDeckProps> = ({ onEditButton, onDeleteBu
 			console.log("No deck selected, nothing to delete.");
 		}
 	};
+	const handleSetActiveButton = () => {
+		if (targetDeck) {
+			deckContext?.setDeck(targetDeck);
+			localStorage.setItem("deckActive", JSON.stringify(targetDeck));
+		}
+	};
 
 	return (
 		<>
@@ -104,6 +114,9 @@ export const SelectDeck: React.FC<SelectDeckProps> = ({ onEditButton, onDeleteBu
 						</button>
 						<button onClick={handleDeleteButton} className="btn" id="deleteDeckBtn" value="Delete">
 							Delete
+						</button>
+						<button onClick={handleSetActiveButton} className="btn" id="setActiveDeckBtn" value="SetActive">
+							Set Active deck
 						</button>
 					</div>
 				</div>

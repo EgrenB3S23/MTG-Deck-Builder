@@ -1,6 +1,5 @@
-import React, { createContext, useState, useContext, ReactNode, useEffect } from "react";
+import { createContext, useState, ReactNode, useEffect } from "react";
 import { IDeck } from "../interfaces";
-import { getDecksFromLS } from "../utils";
 
 interface IDecksContext {
 	// Basic context read/write for decks array:
@@ -107,7 +106,7 @@ export const DecksProvider /* : React.FC */ = ({ children }: MyProviderProps) =>
 		//whenever storedDecks changes, save to localStorage (unless empty)
 		if (storedDecks) {
 			// localStorage.setItem("decksContext", JSON.stringify(storedDecks));
-			saveDecksFromContextToLS;
+			saveDecksFromContextToLS();
 		}
 	}, [storedDecks]);
 
