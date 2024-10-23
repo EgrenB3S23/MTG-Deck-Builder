@@ -1,6 +1,6 @@
 import { useContext, useEffect, useState } from "react";
 import { IDeck } from "../interfaces";
-import { deleteDeckInLS, getCardCounts, getDecksFromLS } from "../utils";
+import { getCardCounts } from "../utils";
 import { DeckContext, DecksContext } from "../context";
 
 interface SelectDeckProps {
@@ -18,7 +18,6 @@ interface IOption {
 export const SelectDeck: React.FC<SelectDeckProps> = ({ onEditButton /* setIDStr, setNameStr, setMainStr, setSideboardStr */ }) => {
 	// displays a list of saved decks and buttons to load, delete and rename.
 
-	// const {targetID, setTargetID} = useState<string>;
 	const [targetDeck, setTargetDeck] = useState<IDeck | null>(null); // contains the deck that is currently selected in the <select> element
 	const [options, setOptions] = useState<IOption[]>([]); // contais the list elements for <select>.
 	const [selectedOption, setSelectedOption] = useState<string>(""); // contains the value field (a deck ID) for the selected <option> under <select>
@@ -70,21 +69,9 @@ export const SelectDeck: React.FC<SelectDeckProps> = ({ onEditButton /* setIDStr
 	};
 
 	const handleDeleteButton = () => {
-		// 1. delete targetDeck from LS
-		// 2. set targetDeck = null
-		// 3. update options (the entries in <select>)
-
 		if (targetDeck) {
-			deleteDeckInLS(targetDeck.id);
+			decksContext?.deleteDeck(targetDeck.id);
 			setTargetDeck(null);
-
-			const decks = getDecksFromLS();
-			// convert list of decks into list of IOptions
-			const deckOptions = decks.map((deck: IDeck) => ({
-				value: deck.id,
-				label: `${deck.name || "(No Name)"} - ID:${deck.id}`,
-			}));
-			setOptions(deckOptions);
 		} else {
 			console.log("No deck selected, nothing to delete.");
 		}
