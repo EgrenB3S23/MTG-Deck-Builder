@@ -1,14 +1,13 @@
-import { ReactElement, useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { IDeck } from "../interfaces";
 import { deleteDeckInLS, getCardCounts, getDeckFromLSByID, getDecksFromLS } from "../utils";
+// import { DeckContext } from "../context";
 
 interface SelectDeckProps {
 	decks: IDeck[];
 	onLoadButton: (inputDeck: IDeck) => void;
 	onDeleteButton: (inputID: string) => void;
 	triggerUpdate: boolean;
-	// onDeleteButton: Function;
-	// onRenameButton: Function;
 }
 interface IOption {
 	value: string; // deck ID
@@ -20,11 +19,12 @@ export const SelectDeck: React.FC<SelectDeckProps> = ({ decks, onLoadButton, onD
 
 	// const {targetID, setTargetID} = useState<string>;
 	const [targetDeck, setTargetDeck] = useState<IDeck | null>(null); // contains the deck that is currently selected in the <select> element
+	const [options, setOptions] = useState<IOption[]>([]); // contais the list elements for <select>.
+	const [selectedOption, setSelectedOption] = useState<string>(""); // contains the value field for the selected <option> under <select>
 
-	const [options, setOptions] = useState<IOption[]>([]);
-	const [selectedOption, setSelectedOption] = useState<string>("");
+	const [cardCounts, setCardCounts] = useState<{ main: number; sideboard: number }>({ main: 0, sideboard: 0 }); // contains the number of cards in maindeck and sideboard of targetDeck.
 
-	const [cardCounts, setCardCounts] = useState<{ main: number; sideboard: number }>({ main: 0, sideboard: 0 });
+	// const deckContext = useContext(DeckContext);
 
 	useEffect(() => {
 		const decks = getDecksFromLS();
@@ -36,7 +36,7 @@ export const SelectDeck: React.FC<SelectDeckProps> = ({ decks, onLoadButton, onD
 		}));
 
 		setOptions(deckOptions);
-	}, [, triggerUpdate]); // runs on mount and when requested by parent component.
+	}, [triggerUpdate]); // runs on mount and when requested by parent component.
 
 	useEffect(() => {
 		// update cardCounts when a new deck is clicked in the list.
@@ -60,7 +60,7 @@ export const SelectDeck: React.FC<SelectDeckProps> = ({ decks, onLoadButton, onD
 	// 	}
 	// }, [triggerUpdate]); // Re-run when triggerUpdate changes (sent by parent component)
 
-	const handleLoadButton = () => {
+	const handleEditButton = () => {
 		console.log("targetDeck: ", targetDeck);
 
 		if (targetDeck) {
@@ -90,18 +90,6 @@ export const SelectDeck: React.FC<SelectDeckProps> = ({ decks, onLoadButton, onD
 		// triggerUpdate = !triggerUpdate;
 	};
 
-	const handleSelectChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-		// whenever a new deck is selected from the list, set it as "targetDeck"
-		const selectedDeckID: string = event.target.value;
-		const deck = getDeckFromLSByID(selectedDeckID); // TODO: change to passable function (the aim is to not use localStorage at all inside this component)
-		setTargetDeck(deck);
-		// setTargetDeck(deck); // Update state with the selected deck
-	};
-
-	const handleSelectChangeNew = (e: React.ChangeEvent<HTMLSelectElement>) => {
-		//
-		setSelectedOption(e.target.value);
-	};
 	const handleTestButton = () => {
 		const msg = getDeckFromLSByID("1729505197787");
 
@@ -113,21 +101,7 @@ export const SelectDeck: React.FC<SelectDeckProps> = ({ decks, onLoadButton, onD
 		<>
 			<section className="selectDeck">
 				<div className="selectDeckWrapper">
-					<button onClick={handleTestButton} className="btn" id="testBtn" value="test">
-						TEST
-					</button>
-
-					{/* <select name="deckPicker" id="deckPicker" size={20} onChange={handleSelectChange}>
-						{decks.map((deck, index) => (
-							<option key={index} value={deck.id}>
-								{deck.name} - ID: {deck.id}
-							</option>
-						))}
-					</select> */}
-
-					{/* <select name="deckPickerNew" id="deckPickerNew" size={20} value={selectedOption} onChange={handleSelectChangeNew}> */}
-					{/* <select name="deckPickerNew" id="deckPickerNew" size={20} value={selectedOption} onChange={(e) => setSelectedOption(e.target.value)}> */}
-					<select name="deckPickerNew" id="deckPickerNew" size={20} onChange={(e) => setSelectedOption(e.target.value)}>
+					<select name="deckPicker" id="deckPicker" size={20} onChange={(e) => setSelectedOption(e.target.value)}>
 						{/* {decks.map((deck, index) => (
 							<option key={index} value={deck.id}>
 								{deck.name} - ID: {deck.id}
@@ -141,8 +115,8 @@ export const SelectDeck: React.FC<SelectDeckProps> = ({ decks, onLoadButton, onD
 					</select>
 
 					<div className="flex-horizontal">
-						<button onClick={handleLoadButton} className="btn" id="loadDeckBtn" value="Load">
-							Load
+						<button onClick={handleEditButton} className="btn" id="editDeckBtn" value="Edit">
+							Edit
 						</button>
 						<button onClick={handleDeleteButton} className="btn" id="deleteDeckBtn" value="Delete">
 							Delete

@@ -453,6 +453,19 @@ export function getCardCounts(deck: IDeck) {
 	return { main: mainCount, sideboard: sideboardCount };
 }
 
+export function areAllCardsVerified(inputDeck: IDeck) {
+	// checks if all cards in deck have been verified.
+	let soFarSoGood: boolean = true;
+
+	for (const card of [...inputDeck.main, ...inputDeck.sideboard]) {
+		if (!card.is_real) {
+			soFarSoGood = false;
+			break;
+		}
+	}
+	return soFarSoGood;
+}
+
 export function exampleTransformCard() {
 	return {
 		name: "Arguel's Blood Fast // Temple of Aclazotz",
